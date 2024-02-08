@@ -15,16 +15,9 @@ class ContainerExporter:
 
     def checkpoint(self):
         response = call_podman(
-            f"/v4.9.0/libpod/containers/{self.container_id}/checkpoint",
-            method="POST",
-            json={
-                "export": True,
-                "keep": True,
-                "leaveRunning": True,
-                "printStats": True,
-                "tcpEstablished": True
-            }
-        )
+            f"/v4.9.0/libpod/containers/{self.container_id}/checkpoint?export=true&leaveRunning=true&tcpEstablished=true&keep=true",
+            method="POST"
+        ) # ????? post required but you supply option with query parameter
 
         path = self.destination / f"checkpoint-{self.container_id}.tar.gz"
 
