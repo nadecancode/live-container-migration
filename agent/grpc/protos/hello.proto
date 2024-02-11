@@ -1,0 +1,21 @@
+service LCMAgent {
+  rpc request_migrate(MigrateRequest) returns (MigrateResponse) {}
+}
+
+message MigrateRequest {
+  required string host = 1;
+  required int32  port = 2;
+}
+
+message MigrateResponse {
+  required bool ok = 1;
+  optional string failureReason = 2;
+}
+
+enum MigrationStatus {
+  CONNECTED = 1;
+  EXPORTING_CONTAINER = 2;
+  TRANSFERRING_CONTAINER_FILE = 3;
+  TRANSFERRING_LEFTOVER_DIFF = 4;
+  COMPLETED = 5;
+}
