@@ -1,5 +1,14 @@
 service LCMAgent {
   rpc request_migrate(MigrateRequest) returns (MigrateResponse) {}
+  rpc transfer_file(stream FileChunk) returns (FileTransferResponse) {}
+}
+
+message FileTransferResponse {
+  required int32 length = 1;
+}
+
+message FileChunk {
+  required bytes buffer = 1;
 }
 
 message MigrateRequest {

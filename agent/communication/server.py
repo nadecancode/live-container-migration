@@ -1,18 +1,19 @@
-import socket
+import grpc.aio
 
 class SocketServer:
-    def __init__(self):
-        self.host = None
-        self.port = None
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+        self.server = None
 
 
-    def listen(self):
-        sock = socket.socket(
-            socket.AF_INET,
-            socket.SOCK_STREAM
-        )
+    async def listen(self):
+        server = grpc.aio.server()
 
-        sock.bind(("0.0.0.0", 0))
-        sock.listen()
+        server.add_insecure_port(f"{self.host}:{self.port}")
+        await server.start()
 
-        self.host, self.port = sock.getsockname()
+        await server.wait_for_termination()
+
+        self.server = server
+        return self.server

@@ -11,7 +11,7 @@ from podman import PodmanClient
 uri = "unix:///run/podman/podman.sock"
 client = PodmanClient(base_url=uri)
 
-socket_server = server.SocketServer()
+socket_server = server.SocketServer("0.0.0.0", 50051)
 socket_server.listen()
 
 print(f"Listening on {socket_server.host}:{socket_server.port}")
