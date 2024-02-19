@@ -24,5 +24,4 @@ class ContainerExporter:
         with open(path, "wb") as file:
             file.write(response.content)
 
-        print(response.headers)
         return path

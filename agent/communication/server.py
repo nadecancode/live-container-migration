@@ -7,13 +7,16 @@ class SocketServer:
         self.server = None
 
 
-    async def listen(self):
+    def construct(self):
         server = grpc.aio.server()
-
         server.add_insecure_port(f"{self.host}:{self.port}")
-        await server.start()
-
-        await server.wait_for_termination()
 
         self.server = server
-        return self.server
+
+        return self
+
+    async def listen(self):
+        await self.server.start()
+        await self.server.wait_for_termination()
+
+        return self

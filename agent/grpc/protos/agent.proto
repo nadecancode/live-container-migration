@@ -1,30 +1,39 @@
+syntax = "proto3";
+
 service LCMAgent {
   rpc request_migrate(MigrateRequest) returns (MigrateResponse) {}
-  rpc transfer_file(stream FileChunk) returns (FileTransferResponse) {}
+  rpc start_file_transfer(FileTransferRequest) returns (FileTransferResponse) {}
+  rpc transfer_file_chunk(stream FileChunk) returns (FileTransferResponse) {}
+  rpc end_file_transfer(FileTransferRequest) returns (FileTransferResponse) {}
+}
+
+message FileTransferRequest {
+  string file_name = 1;
+  int32 length = 2;
 }
 
 message FileTransferResponse {
-  required int32 length = 1;
+  string id = 1;
+  int32 length = 2;
 }
 
 message FileChunk {
-  required bytes buffer = 1;
+  bytes buffer = 2;
 }
 
 message MigrateRequest {
-  required string host = 1;
-  required int32  port = 2;
+  string container_id = 1;
 }
 
 message MigrateResponse {
-  required bool ok = 1;
-  optional string failureReason = 2;
+  bool ok = 1;
+  optional string failure_reason = 2;
 }
 
 enum MigrationStatus {
-  CONNECTED = 1;
-  EXPORTING_CONTAINER = 2;
-  TRANSFERRING_CONTAINER_FILE = 3;
-  TRANSFERRING_LEFTOVER_DIFF = 4;
-  COMPLETED = 5;
+  CONNECTED = 0;
+  EXPORTING_CONTAINER = 1;
+  TRANSFERRING_CONTAINER_FILE = 2;
+  TRANSFERRING_LEFTOVER_DIFF = 3;
+  COMPLETED = 4;
 }
