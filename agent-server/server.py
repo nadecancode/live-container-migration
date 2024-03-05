@@ -31,6 +31,7 @@ class CommunicationServer:
         log.disabled = True
 
         self.checkpoint_path = "/home/cse291/checkpoint.tar.gz"
+        self.precheckpoint_path = "/home/cse291/pre-checkpoint.tar.gz"
 
         @self.app.route("/")
         def index():
@@ -70,10 +71,25 @@ class CommunicationServer:
 
             return "OK"
 
+        @self.app.route("/upload-pre-checkpoint", methods=["POST"])
+        def upload_precheckpoint():
+            state.status = AgentStatus.TRANSPORTING_LEFT_OVER
+
+            range_header = request.headers.get('Range')
+            match = re.search('(?P<start>\d+)-(?P<end>\d+)/(?P<total_bytes>\d+)', range_header)
+            start = int(match.group('start'))
+
+            with open(self.precheckpoint_path, 'rb+' if os.path.exists(self.precheckpoint_path) else 'wb+') as f:
+                f.seek(start)
+                chunk = request.stream.read(1024 * 1024)
+                f.write(chunk)
+
+            return "OK"
+
         @self.app.route("/restore", methods=["POST"])
         def restore_checkpoint():
             try:
-                subprocess.check_call(f"podman container restore --tcp-established -i {self.checkpoint_path} --log-level=debug", shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                subprocess.check_call(f"podman container restore --tcp-established -i {self.checkpoint_path} --import-previous={self.precheckpoint_path} --log-level=debug", shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError:
                 return "Failed to restore", 502
 
