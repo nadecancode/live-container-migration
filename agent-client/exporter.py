@@ -26,16 +26,3 @@ class ContainerExporter:
 
         return path
 
-    def precheckpoint(self):
-        response = call_podman(
-            f"/v4.9.0/libpod/containers/{self.container_id}/checkpoint?export=true&preCheckpoint=true",
-            method="POST"
-        )  # ????? post required but you supply option with query parameter
-
-        path = self.destination / f"pre-checkpoint-{self.container_id}.tar.gz"
-
-        with open(path, "wb") as file:
-            file.write(response.content)
-
-        return path
-
