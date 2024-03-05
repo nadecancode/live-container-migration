@@ -73,6 +73,8 @@ print(f"Generated a checkpoint at path {checkpoint_path.absolute()}")
 
 print("Transporting checkpoint to the destination agent")
 
+agent_state.status = AgentStatus.TRANSPORTING_INITIAL_CHECKPOINT
+
 if not comm_client.upload(checkpoint_path):
     print("Failed to upload checkpoint to destination server. Try again later.")
 
@@ -81,7 +83,7 @@ if not comm_client.upload(checkpoint_path):
 
 print("Transferred checkpoint file. Commanding the destination agent to restore...")
 
-client.containers.remove(container_id, force=True) # same-host test
+agent_state.status = AgentStatus.RESTORING_CHECKPOINT
 
 if not comm_client.restore():
     print("Failed to restore checkpoint in destination server. Try again later.")
@@ -90,3 +92,13 @@ if not comm_client.restore():
     sys.exit(-1)
 
 print(f"Restored container with ID {container_id} at {host}:{port}")
+
+print("Wrapping up the session with destination node")
+
+agent_state.status = AgentStatus.COMPLETED
+comm_client.complete()
+
+print("Destroying the container on this node")
+client.containers.remove(container_id, force=True)
+
+print("Migration Completed")

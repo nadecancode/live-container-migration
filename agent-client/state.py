@@ -13,6 +13,7 @@ class AgentStatus(Enum):
     TRANSPORTING_LEFT_OVER = 4
     COMPLETED = 5
     DUMPING_CHECKPOINT = 6
+    RESTORING_CHECKPOINT = 7
 
 
 class AgentState:

@@ -35,7 +35,6 @@ class CommunicationClient:
         file_size = os.path.getsize(checkpoint_path)
         headers = { "Filename": os.path.basename(checkpoint_path) }
 
-
         with open(checkpoint_path, 'rb') as file:
             start = 0
 
@@ -85,3 +84,8 @@ class CommunicationClient:
         except requests.RequestException as e:
             print(e)
             return False
+
+    def complete(self):
+        response = requests.post(
+            f"{self.base_url}/complete"
+        )

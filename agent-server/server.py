@@ -53,9 +53,7 @@ class CommunicationServer:
 
             state.container_id = container_id
 
-            return jsonify({
-                    "message": "Agent connected"
-                })
+            return "OK"
 
         @self.app.route("/upload-checkpoint", methods=["POST"])
         def upload_checkpoint():
@@ -79,24 +77,24 @@ class CommunicationServer:
             except subprocess.CalledProcessError:
                 return "Failed to restore", 502
 
+            state.status = AgentStatus.COMPLETED
+
             return "OK"
 
 
         @self.app.route("/complete", methods=["POST"])
         def complete_migration():
             if not (state.status == AgentStatus.COMPLETED):
-                return jsonify({
-                    "error": "Agent has not completed the process yet, cannot mark as complete from our end."
-                })
+                return "Agent has not completed the process yet, cannot mark as complete from our end.", 401
 
             state.status = AgentStatus.IDLE
             state.peer = None
             state.pin = None
             state.container_id = None
 
-            return jsonify({
-                "message": "OK."
-            })
+            silentremove(self.checkpoint_path)
+
+            return "OK"
 
     def start(self):
         self.thread = threading.Thread(target=self.app.run, kwargs={'host': self.host, 'port': self.port})
