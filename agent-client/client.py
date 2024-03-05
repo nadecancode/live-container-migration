@@ -22,7 +22,6 @@ class CommunicationClient:
             }
         )
 
-        print(response.text)
         try:
             if response.status_code == 200:
                 return True
