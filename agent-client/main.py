@@ -81,7 +81,6 @@ if not comm_client.upload(checkpoint_path):
     os.remove(checkpoint_path)
     sys.exit(-1)
 
-'''
 print("Transferred checkpoint file. Now transferring pre-checkpoint file...")
 
 agent_state.status = AgentStatus.TRANSPORTING_LEFT_OVER
@@ -92,8 +91,6 @@ if not comm_client.upload(precheckpoint_path, pre=True):
 
     os.remove(precheckpoint_path)
     sys.exit(-1)
-
-'''
 
 print("Transferred pre-checkpoint file. Commanding the destination agent to restore...")
 
