@@ -1,6 +1,6 @@
 from pathlib import Path
 from podman import PodmanClient
-from util.podman import call_podman
+from util import call_podman
 
 class ContainerExporter:
     def __init__(self, client: PodmanClient, container_id: str, destination: Path):
@@ -19,9 +19,12 @@ class ContainerExporter:
             method="POST"
         ) # ????? post required but you supply option with query parameter
 
+        print(response.content)
+
         path = self.destination / f"checkpoint-{self.container_id}.tar.gz"
 
         with open(path, "wb") as file:
             file.write(response.content)
 
         return path
+
