@@ -73,7 +73,7 @@ class CommunicationServer:
         @self.app.route("/restore", methods=["POST"])
         def restore_checkpoint():
             try:
-                subprocess.check_call(f"podman container restore --tcp-established -i {self.checkpoint_path} --log-level=debug", shell=True)
+                subprocess.check_call(f"podman container restore --tcp-established -i {self.checkpoint_path} --log-level=debug", shell=True, capture_output=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError:
                 return "Failed to restore", 502
 
