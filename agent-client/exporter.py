@@ -19,8 +19,6 @@ class ContainerExporter:
             method="POST"
         ) # ????? post required but you supply option with query parameter
 
-        print(response.content)
-
         path = self.destination / f"checkpoint-{self.container_id}.tar.gz"
 
         with open(path, "wb") as file:
