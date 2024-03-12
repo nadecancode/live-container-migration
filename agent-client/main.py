@@ -157,7 +157,7 @@ if tun is None:
     net.activate_wg(net.get_if_name(ip_peer))
     net.set_tunnel_complete(host)
     # Activate peer and migration routing
-    if not comm_client.activate_wg() or comm_client.activate_migration_routing():
+    if not comm_client.activate_wg() or not comm_client.activate_migration_routing():
         print("Failed to setup wireguard (migration routing/activation). Try again later.")
         sys.exit(-1)
 
