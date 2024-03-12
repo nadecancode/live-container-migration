@@ -10,7 +10,10 @@ import ipaddress
 
 def compatible(ip_1, ip_2):
     # Return true if either ip is ipv6, since we don't care
-    if ipaddress.ip_address(ip_1).version == 6 or ipaddress.ip_address(ip_2).version == 6:
+    try:
+        if ipaddress.ip_address(ip_1).version == 6 or ipaddress.ip_address(ip_2).version == 6:
+            return True
+    except:
         return True
     return not ipaddress.ip_network(ip_1, False).overlaps(ipaddress.ip_network(ip_2, False))
 
