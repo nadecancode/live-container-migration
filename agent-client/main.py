@@ -121,6 +121,9 @@ if net.check_tunnel(host):
             # Fully setup; still setup migration routing since we don't know if it's setup on their end
             comm_client.activate_migration_routing()
 
+            # get peer ip
+            peer_ip = tun[net.TUN_PEER_KEY]
+
 
 if tun is None:
     # Teardown on their end
@@ -195,7 +198,7 @@ checkpoint_path = exporter.checkpoint()
 
 for peer_wg_info in ports.values():
     for host_port in peer_wg_info:
-        net.setup_dnat_rule(ip, int(host_port["HostPort"]))
+        net.setup_dnat_rule(peer_ip, int(host_port["HostPort"]))
 net.conntrack_flush() # TODO: get better rules and make this unnecessary
 # would make the dnat unnecessary as well, which is nice
 
