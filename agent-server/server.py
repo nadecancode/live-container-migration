@@ -107,7 +107,7 @@ class CommunicationServer:
                 net.setup_filter_rule(container_ip)
                 subprocess.check_call(
                     f"podman container restore --tcp-established -i {self.checkpoint_path} --import-previous={self.precheckpoint_path} --log-level=debug",
-                    shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                    shell=True, text=True)
                 net.teardown_filter_rule(container_ip)
             except subprocess.CalledProcessError:
                 return "Failed to restore", 502
