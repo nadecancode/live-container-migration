@@ -119,7 +119,7 @@ if net.check_tunnel(host):
             tun = None
         else:
             # Fully setup; still setup migration routing since we don't know if it's setup on their end
-            pass
+            comm_client.activate_migration_routing()
 
 
 if tun is None:
