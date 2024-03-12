@@ -150,8 +150,6 @@ def setup_wg_interface(ip_self, ip_peer, peer_real_ip):
 
     if_name = get_if_name(ip_self)
 
-    add_tunnel(peer_real_ip, if_name, ip_peer)
-
     subprocess.run(f"ip link add {if_name} type wireguard", shell=True)
     subprocess.run(f"ip addr add {ip_self} dev {if_name}", shell=True)
 
