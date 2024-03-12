@@ -8,6 +8,7 @@ import sys
 from bullet import Bullet, SlidePrompt, Input, Numbers
 from exporter import ContainerExporter
 from time import perf_counter
+from common import net
 
 uri = "unix:///run/podman/podman.sock"
 client = PodmanClient(base_url=uri)
@@ -63,6 +64,91 @@ agent_state.status = AgentStatus.CONNECTED
 stop = perf_counter()
 
 print(f"Connected to the destination agent. Took {stop - start}s")
+
+print("Setting up wireguard tunnel")
+start = perf_counter()
+
+# Play ip pingpong
+my_ip = comm_client.pingpong_ip()
+if my_ip == "":
+    print("Failed to get our IP as it appears to the other host. Try again later.")
+    sys.exit(-1)
+
+
+# Wireguard algorithn:
+# Check if wireguard state is setup on this node. If not, set it up.
+# If it is, check if this connection is fully initialized. Verify that is also the case on the peer, and move on
+# Otherwise, if this or peer is partially initialized, kill both
+# Now, initialize wireguard
+if not net.is_wg_setup():
+    net.setup_wg()
+
+tun = None
+
+# wg ips in cidr, host ids not
+if net.check_tunnel(host):
+    tun = net.get_tunnel(host)
+
+if not tun[net.TUN_COMPLETE_KEY]:
+    # Partially setup; teardown on our end
+    net.delete_tunnel(host)
+    net.teardown_wg_interface(tun[net.TUN_IF_KEY])
+    net.teardown_migration_routing(tun[net.TUN_IF_KEY], tun[net.TUN_MARK_KEY], tun[net.TUN_TABLE_KEY])
+
+    tun = None
+else:
+    # Fully setup; verify on their end
+    if not comm_client.verify_wg():
+        # Partially setup; teardown on our end
+        net.delete_tunnel(host)
+        net.teardown_wg_interface(tun[net.TUN_IF_KEY])
+        # We don't know if migration routing is setup or not, so we teardown it anyway
+        net.teardown_migration_routing(tun[net.TUN_IF_KEY], tun[net.TUN_MARK_KEY], tun[net.TUN_TABLE_KEY])
+
+        tun = None
+    else:
+        # Fully setup; still setup migration routing since we don't know if it's setup on their end
+        pass
+
+
+if tun is None:
+    # Teardown on their end
+    comm_client.teardown_wg()
+    # Now, do full setup
+    # First, ip negotiation
+    other_ips = comm_client.get_ip_data()
+    if len(other_ips) == 0:
+        print("Failed to get IP data from the peer. Try again later.")
+        sys.exit(-1)
+    this_ip = net.get_ips()[0]
+    ip_self, ip_peer = net.get_compatible_ips(this_ip, other_ips)
+    # Do setup locally + get port and pubkey from peer
+    # inverted args since we are setting up the peer
+    port = comm_client.wg_setup_initial(ip_self, ip_peer)
+    if port == -1:
+        print("Failed to setup wireguard (peer initial setup). Try again later.")
+        sys.exit(-1)
+    # Get port and pubkey
+    port = net.setup_wg_interface(ip_self, ip_peer, host)
+    pubkey = net.get_pubkey()
+    # Add to tunnel.json
+    net.add_tunnel(host, net.get_if_name(ip_self), ip_peer, ip_self)
+    # Send port and pubkey to peer
+    if not comm_client.wg_setup_peer(port, pubkey):
+        print("Failed to setup wireguard (peer final setup). Try again later.")
+        sys.exit(-1)
+    # Using port and pubkey from peer, setup interfaces
+    net.setup_wg_peer(host, pubkey, port)
+    # Activate interface
+    net.activate_wg(net.get_if_name(ip_peer))
+    net.set_tunnel_complete(host)
+    # Activate peer and migration routing
+    if not comm_client.activate_wg() or comm_client.activate_migration_routing():
+        print("Failed to setup wireguard (migration routing/activation). Try again later.")
+        sys.exit(-1)
+stop = perf_counter()
+
+print(f"Wireguard tunnel setup. Took {stop - start}s")
 
 print(f"Migrating container {container_id} - Dumping a checkpoint")
 

@@ -9,7 +9,7 @@ import requests
 class CommunicationClient:
     def __init__(self, host, port):
         self.base_url = f"http://{host}:{port}"
-        self.chunk_size = 1024 * 1024 # 1MB
+        self.chunk_size = 1024 * 1024  # 1MB
 
     def start(self, container_id):
         response = requests.post(
@@ -33,7 +33,7 @@ class CommunicationClient:
 
     def upload(self, checkpoint_path, pre=False):
         file_size = os.path.getsize(checkpoint_path)
-        headers = { "Filename": os.path.basename(checkpoint_path) }
+        headers = {"Filename": os.path.basename(checkpoint_path)}
 
         with open(checkpoint_path, 'rb') as file:
             start = 0
@@ -84,6 +84,116 @@ class CommunicationClient:
         except requests.RequestException as e:
             print(e)
             return False
+
+    def get_ip_data(self):
+        response = requests.get(
+            f"{self.base_url}/ip_data"
+        )
+
+        try:
+            if response.status_code == 200:
+                return response.content.decode("utf-8").split()
+            return []
+        except requests.RequestException as e:
+            print(e)
+            return []
+
+    def pingpong_ip(self):
+        response = requests.get(
+            f"{self.base_url}/pingpong_ip"
+        )
+
+        try:
+            if response.status_code == 200:
+                return response.content.decode("utf-8")
+            return ""
+        except requests.RequestException as e:
+            print(e)
+            return ""
+
+    def teardown_wg(self):
+        response = requests.get(
+            f"{self.base_url}/teardown_wg"
+        )
+
+        try:
+            if response.status_code == 200:
+                return True
+            return False
+        except requests.RequestException as e:
+            print(e)
+            return False
+
+    def wg_setup_initial(self, peer_ip, this_ip):
+        response = requests.post(
+            f"{self.base_url}/wg_setup_initial",
+            data=json.dumps({
+                "peer_ip": peer_ip,
+                "this_ip": this_ip
+            }),
+            headers={
+                "Content-Type": "application/json"
+            }
+        )
+
+        try:
+            if response.status_code == 200:
+                return int(response.content.decode("utf-8"))
+
+            return -1
+        except requests.RequestException as e:
+            print(e)
+            return -1
+
+    def wg_setup_peer(self, peer_port, peer_pubkey):
+        response = requests.post(
+            f"{self.base_url}/wg_setup_peer",
+            data=json.dumps({
+                "peer_port": peer_port,
+                "peer_pubkey": peer_pubkey
+            }),
+            headers={
+                "Content-Type": "application/json"
+            }
+        )
+
+        try:
+            if response.status_code == 200:
+                return True
+
+            return False
+        except requests.RequestException as e:
+            print(e)
+            return False
+
+    def activate_wg(self):
+        response = requests.post(
+            f"{self.base_url}/activate_wg"
+        )
+
+        try:
+            if response.status_code == 200:
+                return True
+
+            return False
+        except requests.RequestException as e:
+            print(e)
+            return False
+
+    def activate_migration_routing(self):
+        response = requests.post(
+            f"{self.base_url}/activate_migration_routing"
+        )
+
+        try:
+            if response.status_code == 200:
+                return True
+
+            return False
+        except requests.RequestException as e:
+            print(e)
+            return False
+
 
     def complete(self):
         response = requests.post(
