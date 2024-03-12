@@ -204,6 +204,16 @@ class CommunicationServer:
 
             return "OK"
 
+        def verify_wg():
+            # Verifies the wg interface
+            dest = request.remote_addr
+
+            if net.check_tunnel(dest):
+                tun = net.get_tunnel(dest)
+                return str(int(tun[net.TUN_COMPLETE_KEY]))
+
+            return "0"
+
     def start(self):
         self.thread = threading.Thread(target=self.app.run, kwargs={'host': self.host, 'port': self.port})
         self.thread.start()

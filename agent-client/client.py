@@ -194,6 +194,20 @@ class CommunicationClient:
             print(e)
             return False
 
+    def verify_wg(self):
+        response = requests.get(
+            f"{self.base_url}/verify_wg"
+        )
+
+        try:
+            if response.status_code == 200:
+                return int(response.content.decode("utf-8")) == 1
+
+            return False
+        except requests.RequestException as e:
+            print(e)
+            return False
+
 
     def complete(self):
         response = requests.post(
