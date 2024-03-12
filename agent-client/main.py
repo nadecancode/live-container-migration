@@ -7,6 +7,7 @@ from state import AgentState, AgentStatus
 import sys
 from bullet import Bullet, SlidePrompt, Input, Numbers
 from exporter import ContainerExporter
+from time import perf_counter
 
 uri = "unix:///run/podman/podman.sock"
 client = PodmanClient(base_url=uri)
@@ -49,15 +50,23 @@ host, port, container_id = responses
 print(f"Establishing a session with the destination agent at {host}:{port}")
 comm_client = CommunicationClient(host, port)
 
+global_start = perf_counter()
+
+start = perf_counter()
+
 if not comm_client.start(container_id):
     print("Failed to establish a connection with the destination agent. Try again later.")
     sys.exit(-1)
 
 agent_state.status = AgentStatus.CONNECTED
 
-print("Connected to the destination agent.")
+stop = perf_counter()
+
+print(f"Connected to the destination agent. Took {stop - start}ms")
 
 print(f"Migrating container {container_id} - Dumping a checkpoint")
+
+start = perf_counter()
 
 agent_state.status = AgentStatus.DUMPING_CHECKPOINT
 
@@ -69,9 +78,13 @@ exporter = ContainerExporter(
 
 checkpoint_path = exporter.checkpoint()
 
-print(f"Generated a checkpoint at path {checkpoint_path.absolute()}")
+stop = perf_counter()
+
+print(f"Generated a checkpoint at path {checkpoint_path.absolute()}. Took {stop - start}ms")
 
 print("Transporting checkpoint to the destination agent")
+
+start = perf_counter()
 
 agent_state.status = AgentStatus.TRANSPORTING_INITIAL_CHECKPOINT
 
@@ -81,7 +94,13 @@ if not comm_client.upload(checkpoint_path):
     os.remove(checkpoint_path)
     sys.exit(-1)
 
-print("Transferred checkpoint file. Now transferring pre-checkpoint file...")
+stop = perf_counter()
+
+print(f"Transferred checkpoint file. Took {stop - start}ms")
+
+print("Now transferring pre-checkpoint file...")
+
+start = perf_counter()
 
 agent_state.status = AgentStatus.TRANSPORTING_LEFT_OVER
 
@@ -92,7 +111,11 @@ if not comm_client.upload(precheckpoint_path, pre=True):
     os.remove(precheckpoint_path)
     sys.exit(-1)
 
-print("Transferred pre-checkpoint file. Commanding the destination agent to restore...")
+stop = perf_counter()
+
+print(f"Transferred pre-checkpoint file. Took {stop - start}ms")
+
+start = perf_counter()
 
 agent_state.status = AgentStatus.RESTORING_CHECKPOINT
 
@@ -102,7 +125,9 @@ if not comm_client.restore():
     os.remove(checkpoint_path)
     sys.exit(-1)
 
-print(f"Restored container with ID {container_id} at {host}:{port}")
+stop = perf_counter()
+
+print(f"Restored container with ID {container_id} at {host}:{port}. Took {stop - start}ms")
 
 print("Wrapping up the session with destination node")
 
@@ -112,4 +137,6 @@ comm_client.complete()
 print("Destroying the container on this node")
 client.containers.remove(container_id, force=True)
 
-print("Migration Completed")
+global_stop = perf_counter()
+
+print(f"Migration Completed. Took ~{global_stop - global_start}ms overall.")
