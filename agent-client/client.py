@@ -71,9 +71,15 @@ class CommunicationClient:
 
             return False
 
-    def restore(self):
+    def restore(self, container_ip):
         response = requests.post(
-            f"{self.base_url}/restore"
+            f"{self.base_url}/restore",
+            data=json.dumps({
+                "container_ip": container_ip
+            }),
+            headers={
+                "Content-Type": "application/json"
+            }
         )
 
         try:
