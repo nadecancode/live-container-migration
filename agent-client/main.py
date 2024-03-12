@@ -10,7 +10,7 @@ import sys
 from bullet import Bullet, SlidePrompt, Input, Numbers
 from exporter import ContainerExporter
 from time import perf_counter
-from common import net
+from ..common import net
 
 uri = "unix:///run/podman/podman.sock"
 client = PodmanClient(base_url=uri)

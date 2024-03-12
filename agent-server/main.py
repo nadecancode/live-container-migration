@@ -1,6 +1,6 @@
 from podman import PodmanClient
 
-from common.net import is_wg_setup, setup_wg
+from ..common.net import is_wg_setup, setup_wg
 from state import AgentState
 import server
 
