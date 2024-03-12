@@ -103,7 +103,7 @@ def teardown_migration_routing(iface, mark, table):
     subprocess.run(f"ip route del default dev {iface} table {table}", shell=True)
     # Remove iptables rules
     subprocess.run(f"iptables -t mangle -D PREROUTING -i {PODMAN_IFACE} -j CONNMARK --restore-mark", shell=True)
-    subprocess.run(f"iptables -t mangle -D PREROUTING -i {PODMAN_IFACE} -m {mark + 1} -j MARK --set-mark {mark}",
+    subprocess.run(f"iptables -t mangle -D PREROUTING -i {PODMAN_IFACE} -m mark --mark {mark + 1} -j MARK --set-mark {mark}",
                    shell=True)
     subprocess.run(f"iptables -t mangle -D PREROUTING -i {iface} -j MARK --set-mark {mark + 1}", shell=True)
     subprocess.run(f"iptables -t mangle -D PREROUTING -i {iface} -j CONNMARK --save-mark", shell=True)
