@@ -112,7 +112,7 @@ class CommunicationClient:
             return ""
 
     def teardown_wg(self):
-        response = requests.get(
+        response = requests.post(
             f"{self.base_url}/teardown_wg"
         )
 
