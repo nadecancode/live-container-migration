@@ -100,26 +100,26 @@ tun = None
 if net.check_tunnel(host):
     tun = net.get_tunnel(host)
 
-if not tun[net.TUN_COMPLETE_KEY]:
-    # Partially setup; teardown on our end
-    net.delete_tunnel(host)
-    net.teardown_wg_interface(tun[net.TUN_IF_KEY])
-    net.teardown_migration_routing(tun[net.TUN_IF_KEY], tun[net.TUN_MARK_KEY], tun[net.TUN_TABLE_KEY])
-
-    tun = None
-else:
-    # Fully setup; verify on their end
-    if not comm_client.verify_wg():
+    if not tun[net.TUN_COMPLETE_KEY]:
         # Partially setup; teardown on our end
         net.delete_tunnel(host)
         net.teardown_wg_interface(tun[net.TUN_IF_KEY])
-        # We don't know if migration routing is setup or not, so we teardown it anyway
         net.teardown_migration_routing(tun[net.TUN_IF_KEY], tun[net.TUN_MARK_KEY], tun[net.TUN_TABLE_KEY])
 
         tun = None
     else:
-        # Fully setup; still setup migration routing since we don't know if it's setup on their end
-        pass
+        # Fully setup; verify on their end
+        if not comm_client.verify_wg():
+            # Partially setup; teardown on our end
+            net.delete_tunnel(host)
+            net.teardown_wg_interface(tun[net.TUN_IF_KEY])
+            # We don't know if migration routing is setup or not, so we teardown it anyway
+            net.teardown_migration_routing(tun[net.TUN_IF_KEY], tun[net.TUN_MARK_KEY], tun[net.TUN_TABLE_KEY])
+
+            tun = None
+        else:
+            # Fully setup; still setup migration routing since we don't know if it's setup on their end
+            pass
 
 
 if tun is None:
