@@ -123,11 +123,11 @@ def teardown_dnat_rule(ip, port):
 def setup_filter_rule(container_ip):
     # Maybe the conntrack fairy will visit in the night and leave a more elegant solution under my pillow
     # Currently leaving out -p tcp for this and dnat in the hope that it could also work for udp
-    subprocess.run(f"iptables -t FILTER -I FORWARD -p tcp -s {container_ip} -j DROP", shell=True)
+    subprocess.run(f"iptables -t filter -I FORWARD -p tcp -s {container_ip} -j DROP", shell=True)
 
 
 def teardown_filter_rule(container_ip):
-    subprocess.run(f"iptables -t FILTER -D FORWARD -p tcp -s {container_ip} -j DROP", shell=True)
+    subprocess.run(f"iptables -t filter -D FORWARD -p tcp -s {container_ip} -j DROP", shell=True)
 
 
 def conntrack_flush():
