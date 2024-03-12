@@ -183,7 +183,7 @@ class CommunicationServer:
 
             return "OK"
 
-        @self.app.route("/activate_wg", methods=["GET"])
+        @self.app.route("/activate_wg", methods=["POST"])
         def activate_wg():
             # Activates the wg interface
             dest = request.remote_addr
@@ -195,7 +195,7 @@ class CommunicationServer:
 
             return "OK"
 
-        @self.app.route("/activate_migration_routing", methods=["GET"])
+        @self.app.route("/activate_migration_routing", methods=["POST"])
         def activate_migration_routing():
             # Activates the migration routing
             dest = request.remote_addr
