@@ -264,7 +264,7 @@ start = perf_counter()
 
 agent_state.status = AgentStatus.RESTORING_CHECKPOINT
 
-if not comm_client.restore(ip, global_entries):
+if not comm_client.restore(peer_ip, global_entries):
     print("Failed to restore checkpoint in destination server. Try again later.")
     net_cleanup()
 
