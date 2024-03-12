@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "live-container-migration"
+version = "0.1.0"
+description = ""
+authors = ["Jacob <me@rooty.dev>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+podman = "^4.9.0"
+bullet = "^2.2.0"
+flask = "^3.0.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
