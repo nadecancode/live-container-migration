@@ -51,7 +51,7 @@ def get_compatible_ips(list_1, list_2):
 def get_if_name(ip):
     # Given ip, prefix wg0 and then the ip with host masked out, dashes instead of dots
     # Assume only /30s are given
-    return "wg-" + ip.split(".")[1] + "-" + ip.split(".")[2] + "-" + str(int(ip.split(".")[3].split("/")[3]) // 4 * 4)
+    return "wg-" + ip.split(".")[1] + "-" + ip.split(".")[2] + "-" + str(int(ip.split(".")[3].split("/")[0]) // 4 * 4)
 
 
 """
