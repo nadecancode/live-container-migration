@@ -109,6 +109,7 @@ class CommunicationServer:
             state.container_id = None
 
             silentremove(self.checkpoint_path)
+            silentremove(self.precheckpoint_path)
 
             return "OK"
 
