@@ -10,7 +10,16 @@ import sys
 from bullet import Bullet, SlidePrompt, Input, Numbers
 from exporter import ContainerExporter
 from time import perf_counter
-from ..common import net
+
+import os
+import sys
+import inspect
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
+from common import net
 
 uri = "unix:///run/podman/podman.sock"
 client = PodmanClient(base_url=uri)
