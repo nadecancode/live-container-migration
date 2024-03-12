@@ -138,12 +138,12 @@ class CommunicationClient:
 
         try:
             if response.status_code == 200:
-                return int(response.content.decode("utf-8"))
+                return response.json()
 
-            return -1
+            return {}
         except requests.RequestException as e:
             print(e)
-            return -1
+            return {}
 
     def wg_setup_peer(self, peer_port, peer_pubkey):
         response = requests.post(

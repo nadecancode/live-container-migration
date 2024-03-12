@@ -48,10 +48,10 @@ result = cli.launch()
 
 responses = [res[1] for res in result]
 
-host, peer_wg_port, container_id = responses
+host, peer_wg_info, container_id = responses
 
-print(f"Establishing a session with the destination agent at {host}:{peer_wg_port}")
-comm_client = CommunicationClient(host, peer_wg_port)
+print(f"Establishing a session with the destination agent at {host}:{peer_wg_info}")
+comm_client = CommunicationClient(host, peer_wg_info)
 
 global_start = perf_counter()
 
@@ -126,10 +126,13 @@ if tun is None:
     ip_self, ip_peer = net.get_compatible_ips(this_ip, other_ips)
     # Do setup locally + get port and pubkey from peer
     # inverted args since we are setting up the peer
-    peer_wg_port = comm_client.wg_setup_initial(ip_self, ip_peer)
-    if peer_wg_port == -1:
+    peer_wg_info = comm_client.wg_setup_initial(ip_self, ip_peer)
+
+    if len(peer_wg_info) == 0:
         print("Failed to setup wireguard (peer initial setup). Try again later.")
         sys.exit(-1)
+    peer_pubkey = peer_wg_info["pubkey"]
+    peer_port = int(peer_wg_info["port"])
     # Get port and pubkey
     this_wg_port = net.setup_wg_interface(ip_self, ip_peer, host)
     pubkey = net.get_pubkey()
@@ -140,7 +143,7 @@ if tun is None:
         print("Failed to setup wireguard (peer final setup). Try again later.")
         sys.exit(-1)
     # Using port and pubkey from peer, setup interfaces
-    net.setup_wg_peer(host, pubkey, peer_wg_port)
+    net.setup_wg_peer(host, peer_pubkey, peer_port)
     # Activate interface
     net.activate_wg(net.get_if_name(ip_peer))
     net.set_tunnel_complete(host)
@@ -181,8 +184,8 @@ exporter = ContainerExporter(
 
 checkpoint_path = exporter.checkpoint()
 
-for peer_wg_port in ports.values():
-    for host_port in peer_wg_port:
+for peer_wg_info in ports.values():
+    for host_port in peer_wg_info:
         net.setup_dnat_rule(ip, int(host_port["HostPort"]))
 net.conntrack_flush() # TODO: get better rules and make this unnecessary
 # would make the dnat unnecessary as well, which is nice
@@ -236,7 +239,7 @@ if not comm_client.restore():
 
 stop = perf_counter()
 
-print(f"Restored container with ID {container_id} at {host}:{peer_wg_port}. Took {stop - start}s")
+print(f"Restored container with ID {container_id} at {host}:{peer_wg_info}. Took {stop - start}s")
 
 print("Wrapping up the session with destination node")
 
