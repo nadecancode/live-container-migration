@@ -148,7 +148,6 @@ if tun is None:
     if not comm_client.activate_wg() or comm_client.activate_migration_routing():
         print("Failed to setup wireguard (migration routing/activation). Try again later.")
         sys.exit(-1)
-stop = perf_counter()
 
 # Get container info
 out = subprocess.run(f"podman inspect {container_id} -f json", shell=True, capture_output=True).stdout.decode("utf-8")
@@ -163,6 +162,8 @@ container_info = container_info[0]
 
 ports = container_info["NetworkSettings"]["Ports"]
 ip = container_info["NetworkSettings"]["IPAddress"]
+
+stop = perf_counter()
 
 print(f"Wireguard tunnel setup. Took {stop - start}s")
 
@@ -180,7 +181,7 @@ exporter = ContainerExporter(
 
 checkpoint_path = exporter.checkpoint()
 
-for internal_port in ports:
+for internal_port in ports.values():
     for host_port in internal_port:
         net.setup_dnat_rule(ip, int(host_port["HostPort"]))
 net.conntrack_flush() # TODO: get better rules and make this unnecessary
