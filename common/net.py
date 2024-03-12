@@ -198,8 +198,6 @@ def add_dest_conntrack_entries(entries, wg_ip, mark):
 
         add_entry = "-A " + " ".join(entry_parsed[3:]) + " -t " + entry_parsed[2] + " --mark " + str(mark)
 
-        print(add_entry)
-
         subprocess.run(f"conntrack {add_entry}", shell=True)
 
 
