@@ -62,7 +62,7 @@ agent_state.status = AgentStatus.CONNECTED
 
 stop = perf_counter()
 
-print(f"Connected to the destination agent. Took {stop - start}ms")
+print(f"Connected to the destination agent. Took {stop - start}s")
 
 print(f"Migrating container {container_id} - Dumping a checkpoint")
 
@@ -80,7 +80,7 @@ checkpoint_path = exporter.checkpoint()
 
 stop = perf_counter()
 
-print(f"Generated a checkpoint at path {checkpoint_path.absolute()}. Took {stop - start}ms")
+print(f"Generated a checkpoint at path {checkpoint_path.absolute()}. Took {stop - start}s")
 
 print("Transporting checkpoint to the destination agent")
 
@@ -96,7 +96,7 @@ if not comm_client.upload(checkpoint_path):
 
 stop = perf_counter()
 
-print(f"Transferred checkpoint file. Took {stop - start}ms")
+print(f"Transferred checkpoint file. Took {stop - start}s")
 
 print("Now transferring pre-checkpoint file...")
 
@@ -113,7 +113,7 @@ if not comm_client.upload(precheckpoint_path, pre=True):
 
 stop = perf_counter()
 
-print(f"Transferred pre-checkpoint file. Took {stop - start}ms")
+print(f"Transferred pre-checkpoint file. Took {stop - start}s")
 
 start = perf_counter()
 
@@ -127,7 +127,7 @@ if not comm_client.restore():
 
 stop = perf_counter()
 
-print(f"Restored container with ID {container_id} at {host}:{port}. Took {stop - start}ms")
+print(f"Restored container with ID {container_id} at {host}:{port}. Took {stop - start}s")
 
 print("Wrapping up the session with destination node")
 
@@ -139,4 +139,4 @@ client.containers.remove(container_id, force=True)
 
 global_stop = perf_counter()
 
-print(f"Migration Completed. Took ~{global_stop - global_start}ms overall.")
+print(f"Migration Completed. Took ~{global_stop - global_start}s overall.")
