@@ -31,7 +31,7 @@ class CommunicationClient:
             print(e)
             return False
 
-    def upload(self, checkpoint_path):
+    def upload(self, checkpoint_path, pre=False):
         file_size = os.path.getsize(checkpoint_path)
         headers = { "Filename": os.path.basename(checkpoint_path) }
 
@@ -50,7 +50,7 @@ class CommunicationClient:
                 data = file.read(self.chunk_size)
                 start = end
 
-                upload_endpoint = f"{self.base_url}/upload-checkpoint"
+                upload_endpoint = f"{self.base_url}/upload-{'checkpoint' if not pre else 'pre-checkpoint'}"
 
                 try:
                     response = requests.post(upload_endpoint, headers=headers, data=data)
