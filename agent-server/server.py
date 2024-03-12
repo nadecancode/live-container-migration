@@ -175,7 +175,11 @@ class CommunicationServer:
             port = data["peer_port"]
             pubkey = data["peer_pubkey"]
 
-            net.setup_wg_peer(dest, pubkey, port)
+            if not net.check_tunnel(dest):
+                return "Failed to setup peer", 502
+            tun = net.get_tunnel(dest)
+
+            net.setup_wg_peer(tun[net.TUN_IF_KEY], dest, pubkey, port)
 
             return "OK"
 

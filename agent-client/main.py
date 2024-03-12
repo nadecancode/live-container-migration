@@ -152,7 +152,7 @@ if tun is None:
         print("Failed to setup wireguard (peer final setup). Try again later.")
         sys.exit(-1)
     # Using port and pubkey from peer, setup interfaces
-    net.setup_wg_peer(host, peer_pubkey, peer_port)
+    net.setup_wg_peer(net.get_if_name(ip_self), host, peer_pubkey, peer_port)
     # Activate interface
     net.activate_wg(net.get_if_name(ip_peer))
     net.set_tunnel_complete(host)

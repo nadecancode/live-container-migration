@@ -166,11 +166,9 @@ def teardown_wg_interface(if_name):
     subprocess.run(f"ip link del {if_name}", shell=True)
 
 
-def setup_wg_peer(ip_peer, peer_pubkey, port):
+def setup_wg_peer(if_name, ip_peer, peer_pubkey, port):
     if not is_wg_setup():
         setup_wg()
-
-    if_name = get_if_name(ip_peer)
 
     subprocess.run(f"wg set {if_name} peer {peer_pubkey} endpoint {ip_peer}:{port} allowed-ips 0.0.0.0/0",
                    shell=True)
