@@ -112,22 +112,22 @@ def teardown_migration_routing(iface, mark, table):
 def setup_dnat_rule(ip, port):
     # Add dnat rule
     # Maybe the conntrack fairy will visit in the night and leave a more elegant solution under my pillow
-    subprocess.run(f"iptables -t nat -A PREROUTING --dport {port} -j DNAT --to-destination {ip}", shell=True)
+    subprocess.run(f"iptables -t nat -A PREROUTING -p tcp --dport {port} -j DNAT --to-destination {ip}", shell=True)
 
 
 def teardown_dnat_rule(ip, port):
     # Remove dnat rule
-    subprocess.run(f"iptables -t nat -D PREROUTING --dport {port} -j DNAT --to-destination {ip}", shell=True)
+    subprocess.run(f"iptables -t nat -D PREROUTING -p tcp --dport {port} -j DNAT --to-destination {ip}", shell=True)
 
 
 def setup_filter_rule(container_ip):
     # Maybe the conntrack fairy will visit in the night and leave a more elegant solution under my pillow
     # Currently leaving out -p tcp for this and dnat in the hope that it could also work for udp
-    subprocess.run(f"iptables -t FILTER -I FORWARD -s {container_ip} -j DROP", shell=True)
+    subprocess.run(f"iptables -t FILTER -I FORWARD -p tcp -s {container_ip} -j DROP", shell=True)
 
 
 def teardown_filter_rule(container_ip):
-    subprocess.run(f"iptables -t FILTER -D FORWARD -s {container_ip} -j DROP", shell=True)
+    subprocess.run(f"iptables -t FILTER -D FORWARD -p tcp -s {container_ip} -j DROP", shell=True)
 
 
 def conntrack_flush():
