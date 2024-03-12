@@ -193,7 +193,10 @@ exporter = ContainerExporter(
 )
 
 net.tc_add_qdisc(net.get_if_name(peer_ip))
-net.tc_add_latency(net.get_if_name(peer_ip), 600 * 1000)  # if migration takes >5m we have a problem
+net.tc_add_latency(net.get_if_name(peer_ip), 60 * 1000)  # if migration takes >1m we have a problem
+
+# Have to filter packets, otherwise things break
+net.setup_filter_rule(ip)
 
 global_entries = []
 
@@ -210,6 +213,7 @@ for internal_port, port_entry in ports.items():
 def net_cleanup(dnat=True):
     net.tc_del_latency(net.get_if_name(peer_ip))
     net.tc_del_qdisc(net.get_if_name(peer_ip))
+    net.teardown_filter_rule(ip)
     if dnat:
         for entry in ports.values():
             for host_entry in entry:
