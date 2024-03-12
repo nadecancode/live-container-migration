@@ -227,6 +227,8 @@ def add_tunnel(dest, if_name, peer_ip, this_ip):
         with open(TUNNEL_FILE_NAME, "r") as f:
             tun = json.load(f)
             tun[dest] = {TUN_IF_KEY: if_name, TUN_PEER_KEY: peer_ip, TUN_THIS_KEY: this_ip, TUN_MARK_KEY: mark, TUN_TABLE_KEY: table, TUN_COMPLETE_KEY: False, TUN_MIGRATION_ROUTING_KEY: False}
+        with open(TUNNEL_FILE_NAME, "w") as f:
+            json.dump(tun, f)
 
 
 def set_tunnel_complete(dest):
