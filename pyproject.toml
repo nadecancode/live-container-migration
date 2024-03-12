@@ -13,6 +13,7 @@ flask = "^3.0.2"
 netifaces = "^0.11.0"
 filelock = "^3.13.1"
 requests = "^2.31.0"
+requests-unixsocket= "^0.3.0"
 
 
 [build-system]
