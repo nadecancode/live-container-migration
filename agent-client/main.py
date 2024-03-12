@@ -40,16 +40,16 @@ cli = SlidePrompt([
     Input("Destination Host: "),
     Numbers("Destination Port: ", type=int),
     Bullet(
-        prompt = "\nChoose a running container to migrate: ",
+        prompt="\nChoose a running container to migrate: ",
         choices=list(
             map(lambda container: container.id, running_containers)
         ),
-        indent = 0,
-        align = 5,
-        margin = 2,
-        shift = 0,
-        bullet = "",
-        pad_right = 5
+        indent=0,
+        align=5,
+        margin=2,
+        shift=0,
+        bullet="",
+        pad_right=5
     )
 ])
 
@@ -84,7 +84,6 @@ my_ip = comm_client.pingpong_ip()
 if my_ip == "":
     print("Failed to get our IP as it appears to the other host. Try again later.")
     sys.exit(-1)
-
 
 # Wireguard algorithn:
 # Check if wireguard state is setup on this node. If not, set it up.
@@ -123,7 +122,6 @@ if net.check_tunnel(host):
 
             # get peer ip
             peer_ip = tun[net.TUN_PEER_KEY]
-
 
 if tun is None:
     # Teardown on their end
@@ -194,12 +192,33 @@ exporter = ContainerExporter(
     Path("../") / "container" / "exports"
 )
 
+net.tc_add_qdisc(net.get_if_name(peer_ip))
+net.tc_add_latency(net.get_if_name(peer_ip), 600 * 1000)  # if migration takes >5m we have a problem
+
+global_entries = []
+
+for internal_port, port_entry in ports.items():
+    internal_port = internal_port.split("/")[0]
+    for host_port in port_entry:
+        entries = net.dump_conntrack_entries(ip, host_port["HostPort"])
+        global_entries.extend(entries)
+        net.rewrite_source_conntrack_entries(entries, ip, peer_ip, internal_port, host_port["HostPort"])
+        # Optional: this allows new connections to be made to the old host, but needs to be cleaned up
+        net.setup_dnat_rule(peer_ip.split("/")[0], int(host_port["HostPort"]))  # uncidr
+
+
+def net_cleanup(dnat=True):
+    net.tc_del_latency(net.get_if_name(peer_ip))
+    net.tc_del_qdisc(net.get_if_name(peer_ip))
+    if dnat:
+        for entry in ports.values():
+            for host_entry in entry:
+                net.teardown_dnat_rule(peer_ip.split("/")[0], int(host_entry["HostPort"]))  # uncidr
+
+
 checkpoint_path = exporter.checkpoint()
 
-for internal_port in ports.values():
-    for host_port in internal_port:
-        net.setup_dnat_rule(peer_ip.split("/")[0], int(host_port["HostPort"])) # uncidr
-net.conntrack_flush() # TODO: get better rules and make this unnecessary
+# net.conntrack_flush() # TODO: get better rules and make this unnecessary
 # would make the dnat unnecessary as well, which is nice
 
 stop = perf_counter()
@@ -214,6 +233,7 @@ agent_state.status = AgentStatus.TRANSPORTING_INITIAL_CHECKPOINT
 
 if not comm_client.upload(checkpoint_path):
     print("Failed to upload checkpoint to destination server. Try again later.")
+    net_cleanup()
 
     os.remove(checkpoint_path)
     sys.exit(-1)
@@ -231,6 +251,7 @@ agent_state.status = AgentStatus.TRANSPORTING_LEFT_OVER
 precheckpoint_path = exporter.precheckpoint()
 if not comm_client.upload(precheckpoint_path, pre=True):
     print("Failed to upload pre-checkpoint to destination server. Try again later.")
+    net_cleanup()
 
     os.remove(precheckpoint_path)
     sys.exit(-1)
@@ -243,8 +264,9 @@ start = perf_counter()
 
 agent_state.status = AgentStatus.RESTORING_CHECKPOINT
 
-if not comm_client.restore(ip):
+if not comm_client.restore(ip, global_entries):
     print("Failed to restore checkpoint in destination server. Try again later.")
+    net_cleanup()
 
     os.remove(checkpoint_path)
     sys.exit(-1)
@@ -260,6 +282,8 @@ comm_client.complete()
 
 print("Destroying the container on this node")
 client.containers.remove(container_id, force=True)
+
+net_cleanup(dnat=False)
 
 global_stop = perf_counter()
 
