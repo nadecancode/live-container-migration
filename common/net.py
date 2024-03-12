@@ -184,7 +184,7 @@ def rewrite_source_conntrack_entries(entries, container_ip, wg_ip, old_port, new
 
 # Example of dest entry -A -t 431929 -u SEEN_REPLY,ASSURED -s 71.34.64.4 -d 10.140.67.214 -g 10.88.0.18 -q 71.34.64.4 -p tcp --sport 47202 --dport 8080 --reply-port-src 80 --reply-port-dst 47202 --state ESTABLISHED
 # Takes the list of entries dumped by above function, but passed over the wire; rewrite only -d entry
-def add_dest_conntrack_entries(entries, wg_ip):
+def add_dest_conntrack_entries(entries, wg_ip, mark):
     wg_ip = wg_ip.split("/")[0]
     for entry in entries:
         entry_parsed = entry.split(" ")
@@ -192,7 +192,7 @@ def add_dest_conntrack_entries(entries, wg_ip):
             if entry_parsed[i] == "-d":
                 entry_parsed[i + 1] = wg_ip
 
-        add_entry = "-A " + " ".join(entry_parsed[3:]) + " -t " + entry_parsed[2]
+        add_entry = "-A " + " ".join(entry_parsed[3:]) + " -t " + entry_parsed[2] + " --mark " + str(mark)
 
         subprocess.run(f"conntrack {add_entry}", shell=True)
 

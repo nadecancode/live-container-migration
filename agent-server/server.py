@@ -105,7 +105,12 @@ class CommunicationServer:
                 data = request.json
                 wg_ip = data["wg_ip"]
                 conntrack_entries = data["conntrack_entries"]
-                net.add_dest_conntrack_entries(conntrack_entries, wg_ip)
+                # Get mark
+                if not net.check_tunnel(request.remote_addr):
+                    return "Failed to restore", 502
+                tun = net.get_tunnel(request.remote_addr)
+                mark = tun[net.TUN_MARK_KEY]
+                net.add_dest_conntrack_entries(conntrack_entries, wg_ip, mark + 1)
                 subprocess.check_call(
                     f"podman container restore --tcp-established -i {self.checkpoint_path} --import-previous={self.precheckpoint_path} --log-level=debug",
                     shell=True, text=True)
