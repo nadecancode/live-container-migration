@@ -131,7 +131,7 @@ if tun is None:
     if len(other_ips) == 0:
         print("Failed to get IP data from the peer. Try again later.")
         sys.exit(-1)
-    this_ip = net.get_ips()[0]
+    this_ip = net.get_ips()
     ip_self, ip_peer = net.get_compatible_ips(this_ip, other_ips)
     # Do setup locally + get port and pubkey from peer
     # inverted args since we are setting up the peer
