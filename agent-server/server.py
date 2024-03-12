@@ -208,6 +208,7 @@ class CommunicationServer:
 
             return "OK"
 
+        @self.app.route("/verify_wg", methods=["GET"])
         def verify_wg():
             # Verifies the wg interface
             dest = request.remote_addr
