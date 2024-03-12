@@ -120,6 +120,16 @@ def teardown_dnat_rule(ip, port):
     subprocess.run(f"iptables -t nat -D PREROUTING -p tcp --dport {port} -j DNAT --to-destination {ip}", shell=True)
 
 
+def tc_add_latency(ifname, latency):
+    pass
+
+
+def tc_del_latency(ifname):
+    pass
+
+
+
+
 def setup_filter_rule(container_ip):
     # Maybe the conntrack fairy will visit in the night and leave a more elegant solution under my pillow
     # Currently leaving out -p tcp for this and dnat in the hope that it could also work for udp
