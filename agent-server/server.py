@@ -94,9 +94,13 @@ class CommunicationServer:
         @self.app.route("/restore", methods=["POST"])
         def restore_checkpoint():
             try:
+                data = request.json
+                container_ip = data["container_ip"]
+                net.setup_filter_rule(container_ip)
                 subprocess.check_call(
                     f"podman container restore --tcp-established -i {self.checkpoint_path} --import-previous={self.precheckpoint_path} --log-level=debug",
                     shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                net.teardown_filter_rule(container_ip)
             except subprocess.CalledProcessError:
                 return "Failed to restore", 502
 
@@ -186,8 +190,9 @@ class CommunicationServer:
 
             if net.check_tunnel(dest):
                 tun = net.get_tunnel(dest)
-                net.set_tunnel_migration_routing(dest)
-                net.setup_migration_routing(tun[net.TUN_IF_KEY], tun[net.TUN_MARK_KEY], tun[net.TUN_TABLE_KEY])
+                if not tun[net.TUN_MIGRATION_ROUTING_KEY]:
+                    net.setup_migration_routing(tun[net.TUN_IF_KEY], tun[net.TUN_MARK_KEY], tun[net.TUN_TABLE_KEY])
+                    net.set_tunnel_migration_routing(dest)
 
             return "OK"
 

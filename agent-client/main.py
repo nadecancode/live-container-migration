@@ -1,4 +1,6 @@
+import json
 import os
+import subprocess
 from pathlib import Path
 
 from client import CommunicationClient
@@ -46,10 +48,10 @@ result = cli.launch()
 
 responses = [res[1] for res in result]
 
-host, port, container_id = responses
+host, internal_port, container_id = responses
 
-print(f"Establishing a session with the destination agent at {host}:{port}")
-comm_client = CommunicationClient(host, port)
+print(f"Establishing a session with the destination agent at {host}:{internal_port}")
+comm_client = CommunicationClient(host, internal_port)
 
 global_start = perf_counter()
 
@@ -124,21 +126,21 @@ if tun is None:
     ip_self, ip_peer = net.get_compatible_ips(this_ip, other_ips)
     # Do setup locally + get port and pubkey from peer
     # inverted args since we are setting up the peer
-    port = comm_client.wg_setup_initial(ip_self, ip_peer)
-    if port == -1:
+    internal_port = comm_client.wg_setup_initial(ip_self, ip_peer)
+    if internal_port == -1:
         print("Failed to setup wireguard (peer initial setup). Try again later.")
         sys.exit(-1)
     # Get port and pubkey
-    port = net.setup_wg_interface(ip_self, ip_peer, host)
+    internal_port = net.setup_wg_interface(ip_self, ip_peer, host)
     pubkey = net.get_pubkey()
     # Add to tunnel.json
     net.add_tunnel(host, net.get_if_name(ip_self), ip_peer, ip_self)
     # Send port and pubkey to peer
-    if not comm_client.wg_setup_peer(port, pubkey):
+    if not comm_client.wg_setup_peer(internal_port, pubkey):
         print("Failed to setup wireguard (peer final setup). Try again later.")
         sys.exit(-1)
     # Using port and pubkey from peer, setup interfaces
-    net.setup_wg_peer(host, pubkey, port)
+    net.setup_wg_peer(host, pubkey, internal_port)
     # Activate interface
     net.activate_wg(net.get_if_name(ip_peer))
     net.set_tunnel_complete(host)
@@ -147,6 +149,20 @@ if tun is None:
         print("Failed to setup wireguard (migration routing/activation). Try again later.")
         sys.exit(-1)
 stop = perf_counter()
+
+# Get container info
+out = subprocess.run(f"podman inspect {container_id} -f json", shell=True, capture_output=True).stdout.decode("utf-8")
+
+container_info = json.loads(out)
+
+if len(out) == 0:
+    print("Failed to get container info. Try again later.")
+    sys.exit(-1)
+
+container_info = container_info[0]
+
+ports = container_info["NetworkSettings"]["Ports"]
+ip = container_info["NetworkSettings"]["IPAddress"]
 
 print(f"Wireguard tunnel setup. Took {stop - start}s")
 
@@ -163,6 +179,12 @@ exporter = ContainerExporter(
 )
 
 checkpoint_path = exporter.checkpoint()
+
+for internal_port in ports:
+    for host_port in internal_port:
+        net.setup_dnat_rule(ip, int(host_port["HostPort"]))
+net.conntrack_flush() # TODO: get better rules and make this unnecessary
+# would make the dnat unnecessary as well, which is nice
 
 stop = perf_counter()
 
@@ -213,7 +235,7 @@ if not comm_client.restore():
 
 stop = perf_counter()
 
-print(f"Restored container with ID {container_id} at {host}:{port}. Took {stop - start}s")
+print(f"Restored container with ID {container_id} at {host}:{internal_port}. Took {stop - start}s")
 
 print("Wrapping up the session with destination node")
 

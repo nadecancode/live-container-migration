@@ -127,6 +127,10 @@ def teardown_filter_rule(container_ip):
     subprocess.run(f"iptables -t FILTER -D FORWARD -s {container_ip} -j DROP")
 
 
+def conntrack_flush():
+    subprocess.run("conntrack -F", shell=True)
+
+
 # Use /tmp so all wg related config is ephemeral on restart
 TUNNEL_LOCK_FILE_NAME = "/tmp/tunnels.json.lock"
 TUNNEL_FILE_NAME = "/tmp/tunnels.json"
