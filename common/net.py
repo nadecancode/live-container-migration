@@ -91,8 +91,9 @@ def setup_migration_routing(iface, mark, table):
     subprocess.run(f"ip route add default dev {iface} table {table}", shell=True)
     # Add iptables rules
     subprocess.run(f"iptables -t mangle -A PREROUTING -i {PODMAN_IFACE} -j CONNMARK --restore-mark", shell=True)
-    subprocess.run(f"iptables -t mangle -A PREROUTING -i {PODMAN_IFACE} -m mark --mark {mark + 1} -j MARK --set-mark {mark}",
-                   shell=True)
+    subprocess.run(
+        f"iptables -t mangle -A PREROUTING -i {PODMAN_IFACE} -m mark --mark {mark + 1} -j MARK --set-mark {mark}",
+        shell=True)
     subprocess.run(f"iptables -t mangle -A PREROUTING -i {iface} -j MARK --set-mark {mark + 1}", shell=True)
     subprocess.run(f"iptables -t mangle -A PREROUTING -i {iface} -j CONNMARK --save-mark", shell=True)
 
@@ -103,8 +104,9 @@ def teardown_migration_routing(iface, mark, table):
     subprocess.run(f"ip route del default dev {iface} table {table}", shell=True)
     # Remove iptables rules
     subprocess.run(f"iptables -t mangle -D PREROUTING -i {PODMAN_IFACE} -j CONNMARK --restore-mark", shell=True)
-    subprocess.run(f"iptables -t mangle -D PREROUTING -i {PODMAN_IFACE} -m mark --mark {mark + 1} -j MARK --set-mark {mark}",
-                   shell=True)
+    subprocess.run(
+        f"iptables -t mangle -D PREROUTING -i {PODMAN_IFACE} -m mark --mark {mark + 1} -j MARK --set-mark {mark}",
+        shell=True)
     subprocess.run(f"iptables -t mangle -D PREROUTING -i {iface} -j MARK --set-mark {mark + 1}", shell=True)
     subprocess.run(f"iptables -t mangle -D PREROUTING -i {iface} -j CONNMARK --save-mark", shell=True)
 
@@ -138,7 +140,8 @@ def tc_del_qdisc(ifname):
 
 
 def dump_conntrack_entries(container_ip, port):
-    output = subprocess.run(f"conntrack -L -p tcp -g {container_ip} --dport {port} -o save", shell=True, text=True, capture_output=True).stdout
+    output = subprocess.run(f"conntrack -L -p tcp -g {container_ip} --dport {port} -o save", shell=True, text=True,
+                            capture_output=True).stdout
     # Split by newline and trim both ends
     entries = []
     for entry in output.split("\n"):
@@ -181,6 +184,7 @@ def rewrite_source_conntrack_entries(entries, container_ip, wg_ip, old_port, new
         subprocess.run(f"conntrack {add_entry}", shell=True)
 
         pass
+
 
 # Example of dest entry -A -t 431929 -u SEEN_REPLY,ASSURED -s 71.34.64.4 -d 10.140.67.214 -g 10.88.0.18 -q 71.34.64.4 -p tcp --sport 47202 --dport 8080 --reply-port-src 80 --reply-port-dst 47202 --state ESTABLISHED
 # Takes the list of entries dumped by above function, but passed over the wire; rewrite only -d entry
@@ -238,7 +242,6 @@ def setup_wg_interface(ip_self, ip_peer, peer_real_ip):
 
 
 def teardown_wg_interface(if_name):
-
     # Don't need to delete peers or anything complicated
     subprocess.run(f"ip link del {if_name}", shell=True)
 
@@ -263,6 +266,7 @@ def get_pubkey():
 def is_wg_setup():
     # Check if all files exist
     return os.path.exists(TUNNEL_FILE_NAME) and os.path.exists(PRIVKEY_NAME) and os.path.exists(PUBKEY_NAME)
+
 
 TUN_IF_KEY = "if_name"
 TUN_PEER_KEY = "peer_ip"
@@ -301,7 +305,8 @@ def add_tunnel(dest, if_name, peer_ip, this_ip):
         table = increment_and_get_table()
         with open(TUNNEL_FILE_NAME, "r") as f:
             tun = json.load(f)
-            tun[dest] = {TUN_IF_KEY: if_name, TUN_PEER_KEY: peer_ip, TUN_THIS_KEY: this_ip, TUN_MARK_KEY: mark, TUN_TABLE_KEY: table, TUN_COMPLETE_KEY: False, TUN_MIGRATION_ROUTING_KEY: False}
+            tun[dest] = {TUN_IF_KEY: if_name, TUN_PEER_KEY: peer_ip, TUN_THIS_KEY: this_ip, TUN_MARK_KEY: mark,
+                         TUN_TABLE_KEY: table, TUN_COMPLETE_KEY: False, TUN_MIGRATION_ROUTING_KEY: False}
         with open(TUNNEL_FILE_NAME, "w") as f:
             json.dump(tun, f)
 

@@ -111,6 +111,8 @@ class CommunicationServer:
                 tun = net.get_tunnel(request.remote_addr)
                 mark = tun[net.TUN_MARK_KEY]
                 net.add_dest_conntrack_entries(conntrack_entries, wg_ip, mark + 1)
+                from time import sleep
+                sleep(10)
                 subprocess.check_call(
                     f"podman container restore --tcp-established -i {self.checkpoint_path} --import-previous={self.precheckpoint_path} --log-level=debug",
                     shell=True, text=True)
