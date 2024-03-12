@@ -120,14 +120,81 @@ def teardown_dnat_rule(ip, port):
     subprocess.run(f"iptables -t nat -D PREROUTING -p tcp --dport {port} -j DNAT --to-destination {ip}", shell=True)
 
 
+def tc_add_qdisc(ifname):
+    subprocess.run(f"tc qdisc add dev {ifname} root", shell=True)
+
+
 def tc_add_latency(ifname, latency):
+    subprocess.run(f"tc qdisc add dev {ifname} root netem delay {latency}ms", shell=True)
     pass
 
 
 def tc_del_latency(ifname):
-    pass
+    subprocess.run(f"tc qdisc add dev {ifname} root netem delay 0ms", shell=True)
 
 
+def tc_del_qdisc(ifname):
+    subprocess.run(f"tc qdisc del dev {ifname} root", shell=True)
+
+
+def dump_conntrack_entries(container_ip, port):
+    output = subprocess.run(f"conntrack -L -p tcp -g {container_ip} --dport {port} -o save", shell=True, text=True, capture_output=True).stdout
+    # Split by newline and trim both ends
+    entries = []
+    for entry in output.split("\n"):
+        entry = entry.strip()
+        if len(entry) > 0:
+            entries.append(entry)
+    return entries
+
+
+# Example of pre entry: -A -t 431996 -u SEEN_REPLY,ASSURED -s 71.34.64.4 -d 172.31.26.253 -g 10.88.0.18 -q 71.34.64.4 -p tcp --sport 47202 --dport 8080 --reply-port-src 80 --reply-port-dst 47202 --state ESTABLISHED
+# Example of post entry: -A -t 431962 -u SEEN_REPLY,ASSURED -s 71.34.64.4 -d 172.31.26.253 -g 10.140.67.214 -q 71.34.64.4 -p tcp --sport 47202 --dport 8080 --reply-port-src 8080 --reply-port-dst 47202 --state ESTABLISHED
+def rewrite_source_conntrack_entries(entries, container_ip, wg_ip, old_port, new_port):
+    wg_ip = wg_ip.split("/")[0]
+    for entry in entries:
+        # First, delete old entry by splicing out time and using -D instead of -A
+        entry_parsed = entry.split(" ")
+        del_entry = "-D " + " ".join(entry_parsed[3:])
+        # Then, add new entry by changing time and using -A
+
+        valid = True
+
+        for i in range(3, len(entry_parsed), 2):
+            if entry_parsed[i] == "-g":
+                if entry_parsed[i + 1] != container_ip:
+                    valid = False
+                entry_parsed[i + 1] = wg_ip
+            if entry_parsed[i] == "--reply-port-src":
+                if entry_parsed[i + 1] != old_port:
+                    valid = False
+                entry_parsed[i + 1] = new_port
+
+        if not valid:
+            continue
+
+        # brittle parsing code; that is fine for now
+
+        add_entry = "-A " + " ".join(entry_parsed[3:]) + " -t " + entry_parsed[2]
+
+        subprocess.run(f"conntrack {del_entry}", shell=True)
+        subprocess.run(f"conntrack {add_entry}", shell=True)
+
+        pass
+
+# Example of dest entry -A -t 431929 -u SEEN_REPLY,ASSURED -s 71.34.64.4 -d 10.140.67.214 -g 10.88.0.18 -q 71.34.64.4 -p tcp --sport 47202 --dport 8080 --reply-port-src 80 --reply-port-dst 47202 --state ESTABLISHED
+# Takes the list of entries dumped by above function, but passed over the wire; rewrite only -d entry
+def add_dest_conntrack_entries(entries, wg_ip):
+    wg_ip = wg_ip.split("/")[0]
+    for entry in entries:
+        entry_parsed = entry.split(" ")
+        for i in range(3, len(entry_parsed), 2):
+            if entry_parsed[i] == "-d":
+                entry_parsed[i + 1] = wg_ip
+
+        add_entry = "-A " + " ".join(entry_parsed[3:]) + " -t " + entry_parsed[2]
+
+        subprocess.run(f"conntrack {add_entry}", shell=True)
 
 
 def setup_filter_rule(container_ip):
