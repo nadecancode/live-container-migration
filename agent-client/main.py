@@ -192,8 +192,6 @@ exporter = ContainerExporter(
     Path("../") / "container" / "exports"
 )
 
-start = perf_counter()
-
 precheckpoint_path = exporter.precheckpoint()
 
 print("Now transferring pre-checkpoint file...")
@@ -250,6 +248,8 @@ stop = perf_counter()
 print(f"Generated a checkpoint at path {checkpoint_path.absolute()}. Took {stop - start}s")
 
 print("Transporting checkpoint to the destination agent")
+
+start = perf_counter()
 
 agent_state.status = AgentStatus.TRANSPORTING_INITIAL_CHECKPOINT
 
