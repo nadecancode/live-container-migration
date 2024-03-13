@@ -121,7 +121,7 @@ if net.check_tunnel(host):
             comm_client.activate_migration_routing()
 
             # get peer ip
-            peer_ip = tun[net.TUN_PEER_KEY]
+            ip_peer = tun[net.TUN_PEER_KEY]
 
 if tun is None:
     # Teardown on their end
@@ -193,7 +193,7 @@ exporter = ContainerExporter(
 )
 
 # net.tc_add_qdisc(net.get_if_name(peer_ip)) # redundant
-net.tc_add_latency(net.get_if_name(peer_ip), 60 * 1000)  # if migration takes >1m we have a problem
+net.tc_add_latency(net.get_if_name(ip_peer), 60 * 1000)  # if migration takes >1m we have a problem
 
 # Have to filter packets, otherwise things break
 net.setup_filter_rule(ip)
@@ -205,19 +205,19 @@ for internal_port, port_entry in ports.items():
     for host_port in port_entry:
         entries = net.dump_conntrack_entries(ip, host_port["HostPort"])
         global_entries.extend(entries)
-        net.rewrite_source_conntrack_entries(entries, ip, peer_ip, internal_port, host_port["HostPort"])
+        net.rewrite_source_conntrack_entries(entries, ip, ip_peer, internal_port, host_port["HostPort"])
         # Optional: this allows new connections to be made to the old host, but needs to be cleaned up
-        net.setup_dnat_rule(peer_ip.split("/")[0], int(host_port["HostPort"]))  # uncidr
+        net.setup_dnat_rule(ip_peer.split("/")[0], int(host_port["HostPort"]))  # uncidr
 
 
 def net_cleanup(dnat=True):
-    net.tc_del_latency(net.get_if_name(peer_ip))
-    net.tc_del_qdisc(net.get_if_name(peer_ip))
+    net.tc_del_latency(net.get_if_name(ip_peer))
+    net.tc_del_qdisc(net.get_if_name(ip_peer))
     net.teardown_filter_rule(ip)
     if dnat:
         for entry in ports.values():
             for host_entry in entry:
-                net.teardown_dnat_rule(peer_ip.split("/")[0], int(host_entry["HostPort"]))  # uncidr
+                net.teardown_dnat_rule(ip_peer.split("/")[0], int(host_entry["HostPort"]))  # uncidr
 
 
 checkpoint_path = exporter.checkpoint()
@@ -266,14 +266,14 @@ start = perf_counter()
 
 agent_state.status = AgentStatus.RESTORING_CHECKPOINT
 
-if not comm_client.restore(peer_ip, global_entries):
+if not comm_client.restore(ip_peer, global_entries):
     print("Failed to restore checkpoint in destination server. Try again later.")
     net_cleanup()
 
     os.remove(checkpoint_path)
     sys.exit(-1)
 
-net.tc_del_latency(net.get_if_name(peer_ip))
+net.tc_del_latency(net.get_if_name(ip_peer))
 
 stop = perf_counter()
 
