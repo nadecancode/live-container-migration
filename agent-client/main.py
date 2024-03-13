@@ -192,7 +192,7 @@ exporter = ContainerExporter(
     Path("../") / "container" / "exports"
 )
 
-net.tc_add_qdisc(net.get_if_name(peer_ip))
+# net.tc_add_qdisc(net.get_if_name(peer_ip)) # redundant
 net.tc_add_latency(net.get_if_name(peer_ip), 60 * 1000)  # if migration takes >1m we have a problem
 
 # Have to filter packets, otherwise things break
@@ -274,6 +274,8 @@ if not comm_client.restore(peer_ip, global_entries):
 
     os.remove(checkpoint_path)
     sys.exit(-1)
+
+net.tc_del_latency(net.get_if_name(peer_ip))
 
 stop = perf_counter()
 
