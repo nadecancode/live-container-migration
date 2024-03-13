@@ -15,7 +15,7 @@ class ContainerExporter:
 
     def checkpoint(self):
         response = call_podman(
-            f"/v4.9.0/libpod/containers/{self.container_id}/checkpoint?export=true&leaveRunning=true&tcpEstablished=true&keep=true&withPrevious=true",
+            f"/v4.9.0/libpod/containers/{self.container_id}/checkpoint?export=true&tcpEstablished=true&keep=true&withPrevious=true",
             method="POST"
         ) # ????? post required but you supply option with query parameter
 
