@@ -241,9 +241,11 @@ def net_cleanup(dnat=True):
             for host_entry in entry:
                 net.teardown_dnat_rule(ip_peer.split("/")[0], int(host_entry["HostPort"]))  # uncidr
 
-stop = perf_counter()
 
 checkpoint_path = exporter.checkpoint()
+
+
+stop = perf_counter()
 
 print(f"Generated a checkpoint at path {checkpoint_path.absolute()}. Took {stop - start}s")
 
