@@ -132,7 +132,7 @@ def tc_add_latency(ifname, latency):
 
 
 def tc_del_latency(ifname):
-    subprocess.run(f"tc qdisc add dev {ifname} root netem delay 0ms", shell=True)
+    subprocess.run(f"tc qdisc change dev {ifname} root netem delay 0ms", shell=True)
 
 
 def tc_del_qdisc(ifname):
