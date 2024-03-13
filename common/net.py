@@ -90,7 +90,6 @@ def setup_migration_routing(iface, mark, table):
     subprocess.run(f"ip rule add fwmark {mark} lookup {table}", shell=True)
     subprocess.run(f"ip route add default dev {iface} table {table}", shell=True)
     # Add iptables rules
-    subprocess.run(f"iptables -t mangle -A PREROUTING -i {PODMAN_IFACE} -j CONNMARK --restore-mark", shell=True)
     subprocess.run(
         f"iptables -t mangle -A PREROUTING -i {PODMAN_IFACE} -m mark --mark {mark + 1} -j MARK --set-mark {mark}",
         shell=True)
@@ -103,7 +102,6 @@ def teardown_migration_routing(iface, mark, table):
     subprocess.run(f"ip rule del fwmark {mark} lookup {table}", shell=True)
     subprocess.run(f"ip route del default dev {iface} table {table}", shell=True)
     # Remove iptables rules
-    subprocess.run(f"iptables -t mangle -D PREROUTING -i {PODMAN_IFACE} -j CONNMARK --restore-mark", shell=True)
     subprocess.run(
         f"iptables -t mangle -D PREROUTING -i {PODMAN_IFACE} -m mark --mark {mark + 1} -j MARK --set-mark {mark}",
         shell=True)
@@ -289,6 +287,8 @@ def setup_wg():
     subprocess.run("wg genkey > " + PRIVKEY_NAME, shell=True)
     subprocess.run("wg pubkey < " + PRIVKEY_NAME + " > " + PUBKEY_NAME, shell=True)
 
+    # Setup conmark save rule
+    subprocess.run(f"iptables -t mangle -A PREROUTING -i {PODMAN_IFACE} -j CONNMARK --restore-mark", shell=True)
 
 # json handling could be better, unfortunately not atomic and I don't want to deal with locks
 # the goal is for this to be good enough at concurrent access even though we won't use it that way in demos or irl
