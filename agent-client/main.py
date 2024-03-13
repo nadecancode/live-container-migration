@@ -180,7 +180,7 @@ stop = perf_counter()
 
 print(f"Wireguard tunnel setup. Took {stop - start}s")
 
-print(f"Migrating container {container_id} - Dumping a checkpoint")
+print(f"Migrating container {container_id} - Dumping a pre-checkpoint")
 
 start = perf_counter()
 
@@ -191,6 +191,29 @@ exporter = ContainerExporter(
     container_id,
     Path("../") / "container" / "exports"
 )
+
+start = perf_counter()
+
+precheckpoint_path = exporter.precheckpoint()
+
+print("Now transferring pre-checkpoint file...")
+
+if not comm_client.upload(precheckpoint_path, pre=True):
+    print("Failed to upload pre-checkpoint to destination server. Try again later.")
+
+    os.remove(precheckpoint_path)
+    sys.exit(-1)
+
+agent_state.status = AgentStatus.TRANSPORTING_LEFT_OVER
+
+stop = perf_counter()
+
+print(f"Transferred pre-checkpoint file. Took {stop - start}s")
+
+start = perf_counter()
+
+# net.conntrack_flush() # TODO: get better rules and make this unnecessary
+# would make the dnat unnecessary as well, which is nice
 
 # net.tc_add_qdisc(net.get_if_name(peer_ip)) # redundant
 net.tc_add_latency(net.get_if_name(peer_ip), 60 * 1000)  # if migration takes >1m we have a problem
@@ -209,7 +232,6 @@ for internal_port, port_entry in ports.items():
         # Optional: this allows new connections to be made to the old host, but needs to be cleaned up
         net.setup_dnat_rule(peer_ip.split("/")[0], int(host_port["HostPort"]))  # uncidr
 
-
 def net_cleanup(dnat=True):
     net.tc_del_latency(net.get_if_name(peer_ip))
     net.tc_del_qdisc(net.get_if_name(peer_ip))
@@ -219,37 +241,13 @@ def net_cleanup(dnat=True):
             for host_entry in entry:
                 net.teardown_dnat_rule(peer_ip.split("/")[0], int(host_entry["HostPort"]))  # uncidr
 
+stop = perf_counter()
 
 checkpoint_path = exporter.checkpoint()
-
-# net.conntrack_flush() # TODO: get better rules and make this unnecessary
-# would make the dnat unnecessary as well, which is nice
-
-stop = perf_counter()
 
 print(f"Generated a checkpoint at path {checkpoint_path.absolute()}. Took {stop - start}s")
 
 print("Transporting checkpoint to the destination agent")
-
-start = perf_counter()
-
-print("Now transferring pre-checkpoint file...")
-
-precheckpoint_path = exporter.precheckpoint()
-if not comm_client.upload(precheckpoint_path, pre=True):
-    print("Failed to upload pre-checkpoint to destination server. Try again later.")
-    net_cleanup()
-
-    os.remove(precheckpoint_path)
-    sys.exit(-1)
-
-agent_state.status = AgentStatus.TRANSPORTING_LEFT_OVER
-
-stop = perf_counter()
-
-print(f"Transferred pre-checkpoint file. Took {stop - start}s")
-
-start = perf_counter()
 
 agent_state.status = AgentStatus.TRANSPORTING_INITIAL_CHECKPOINT
 
@@ -259,6 +257,8 @@ if not comm_client.upload(checkpoint_path):
 
     os.remove(checkpoint_path)
     sys.exit(-1)
+
+stop = perf_counter()
 
 print(f"Transferred checkpoint file. Took {stop - start}s")
 
