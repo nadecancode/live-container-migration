@@ -233,24 +233,7 @@ print("Transporting checkpoint to the destination agent")
 
 start = perf_counter()
 
-agent_state.status = AgentStatus.TRANSPORTING_INITIAL_CHECKPOINT
-
-if not comm_client.upload(checkpoint_path):
-    print("Failed to upload checkpoint to destination server. Try again later.")
-    net_cleanup()
-
-    os.remove(checkpoint_path)
-    sys.exit(-1)
-
-stop = perf_counter()
-
-print(f"Transferred checkpoint file. Took {stop - start}s")
-
 print("Now transferring pre-checkpoint file...")
-
-start = perf_counter()
-
-agent_state.status = AgentStatus.TRANSPORTING_LEFT_OVER
 
 precheckpoint_path = exporter.precheckpoint()
 if not comm_client.upload(precheckpoint_path, pre=True):
@@ -260,9 +243,24 @@ if not comm_client.upload(precheckpoint_path, pre=True):
     os.remove(precheckpoint_path)
     sys.exit(-1)
 
+agent_state.status = AgentStatus.TRANSPORTING_LEFT_OVER
+
 stop = perf_counter()
 
 print(f"Transferred pre-checkpoint file. Took {stop - start}s")
+
+start = perf_counter()
+
+agent_state.status = AgentStatus.TRANSPORTING_INITIAL_CHECKPOINT
+
+if not comm_client.upload(checkpoint_path):
+    print("Failed to upload checkpoint to destination server. Try again later.")
+    net_cleanup()
+
+    os.remove(checkpoint_path)
+    sys.exit(-1)
+
+print(f"Transferred checkpoint file. Took {stop - start}s")
 
 start = perf_counter()
 
