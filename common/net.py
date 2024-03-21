@@ -114,12 +114,15 @@ def teardown_migration_routing(iface, mark, table):
 def setup_dnat_rule(ip, port):
     # Add dnat rule
     # Maybe the conntrack fairy will visit in the night and leave a more elegant solution under my pillow
+    # UPDATE: the conntrack fairy did, this function should be mostly unused now
     subprocess.run(f"iptables -t nat -A PREROUTING -p tcp --dport {port} -j DNAT --to-destination {ip}", shell=True)
+    subprocess.run(f"iptables -t nat -A PREROUTING -p udp --dport {port} -j DNAT --to-destination {ip}", shell=True)
 
 
 def teardown_dnat_rule(ip, port):
     # Remove dnat rule
     subprocess.run(f"iptables -t nat -D PREROUTING -p tcp --dport {port} -j DNAT --to-destination {ip}", shell=True)
+    subprocess.run(f"iptables -t nat -D PREROUTING -p udp --dport {port} -j DNAT --to-destination {ip}", shell=True)
 
 
 def tc_add_qdisc(ifname):
@@ -148,6 +151,15 @@ def dump_conntrack_entries(container_ip, port):
         entry = entry.strip()
         if len(entry) > 0:
             entries.append(entry)
+
+    output = subprocess.run(f"conntrack -L -p udp -g {container_ip} --dport {port} -o save", shell=True, text=True,
+                                capture_output=True).stdout
+    # Split by newline and trim both ends
+    for entry in output.split("\n"):
+        entry = entry.strip()
+        if len(entry) > 0:
+            entries.append(entry)
+
     return entries
 
 
@@ -202,13 +214,15 @@ def add_dest_conntrack_entries(entries, wg_ip, mark):
 
 
 def setup_filter_rule(container_ip):
-    # Maybe the conntrack fairy will visit in the night and leave a more elegant solution under my pillow
-    # Currently leaving out -p tcp for this and dnat in the hope that it could also work for udp
+    # Have to filter otherwise packets could arrive from container between old connection getting removed and new
+    # connection being placed. We do this as late as possible to minimize network downtime
     subprocess.run(f"iptables -t filter -I FORWARD -p tcp -s {container_ip} -j DROP", shell=True)
+    subprocess.run(f"iptables -t filter -I FORWARD -p udp -s {container_ip} -j DROP", shell=True)
 
 
 def teardown_filter_rule(container_ip):
     subprocess.run(f"iptables -t filter -D FORWARD -p tcp -s {container_ip} -j DROP", shell=True)
+    subprocess.run(f"iptables -t filter -D FORWARD -p udp -s {container_ip} -j DROP", shell=True)
 
 
 def conntrack_flush():
