@@ -182,9 +182,13 @@ def dump_conntrack_entries(container_ip, port):
     for entry in unparsed:
         entry_split = entry.split()
         print(entry_split)
-        proto = entry_split[3]
-        for i in range(5, len(entry_split)):
+        for i in range(0, len(entry_split)):
+            if entry_split[i] == "udp" or entry_split[i] == "tcp":
+                proto = entry_split[i]
+                continue
             val = entry_split[i].split("=")
+            if len(val) == 0:
+                continue
             if val[0] == "src":
                 src_ip = val[1]
             if val[0] == "dst":
