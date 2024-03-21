@@ -200,10 +200,14 @@ start = perf_counter()
 
 agent_state.status = AgentStatus.DUMPING_CHECKPOINT
 
+# we delete and recreate the folder on every run. Race condition w/ multiple clients; TODO: don't do that
+subprocess.run(f"rm -rf /tmp/exports", shell=True)
+subprocess.run(f"mkdir /tmp/exports", shell=True)
+
 exporter = ContainerExporter(
     client,
     container_id,
-    Path("../") / "container" / "exports"
+    Path("/tmp") / "exports"
 )
 
 precheckpoint_path = exporter.precheckpoint()
