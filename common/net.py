@@ -220,6 +220,9 @@ def dump_conntrack_entries(container_ip, port):
                     break
             except:
                 print("Parse failure")
+        else:
+            print("No matching entry found")
+    print(real_entries)
 
     return real_entries
 
