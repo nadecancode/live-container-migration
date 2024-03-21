@@ -30,14 +30,14 @@ print("Servers started")
 # Start iperf container on node 0
 # podman run -dt --runtime=runc --name iperf3 -p 5201:5201 --replace --privileged  docker.io/networkstatic/iperf3 -s -J
 run_ssh_command(ND_0,
-                "podman run -dt --runtime=runc --name iperf3 -p 5201:5201 --replace --privileged  docker.io/networkstatic/iperf3 -s -J")
+                "podman run -dt --runtime=runc --name iperf3 -p 5201:5201/tcp -p 5201:5201/udp --replace --privileged  docker.io/networkstatic/iperf3 -s -J")
 
 print("Iperf container started")
 
 # Start iperf on node 3 connecting to node 0
 # iperf3 -J --bidir -t 80 -c IP -p 5201
 # leave 20 extra seconds for various migration things
-output = run_ssh_command(ND_3, f"iperf3 -J --bidir -t 80 -c {ND_0} -p 5201")
+output = run_ssh_command(ND_3, f"iperf3 -J --bidir -t 80 -c {ND_0} -p 5201 --get-server-output")
 
 print("Iperf started")
 
@@ -119,8 +119,10 @@ bad = "notbad"
 if bad_test.is_set():
     bad = "bad"
 
+now = datetime.datetime.now().strftime("%d-%H-%M")
+
 # Output iperf results to json
-with open(f"iperf_{datetime.datetime.now()}_{bad}", "w") as f:
+with open(f"iperf_{now}_{bad}", "w") as f:
     f.write(out)
 
 print("Done")
