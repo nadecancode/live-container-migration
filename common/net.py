@@ -202,7 +202,7 @@ def dump_conntrack_entries(container_ip, port):
         for parsed_entry in entries:
             parsed_entry_split = parsed_entry.split()
             print(parsed_entry_split)
-            for i in range(3, len(parsed_entry_split), 2):
+            for i in range(0, len(parsed_entry_split) - 1):
                 if parsed_entry_split[i] == "-s":
                     source_ip = parsed_entry_split[i + 1]
                 if parsed_entry_split[i] == "--dport":
