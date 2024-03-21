@@ -208,20 +208,9 @@ def add_dest_conntrack_entries(entries, wg_ip, mark):
             if entry_parsed[i] == "-d":
                 entry_parsed[i + 1] = wg_ip
 
-        add_entry = " ".join(entry_parsed[3:]) + " -t " + entry_parsed[2]
+        add_entry = "-A " + " ".join(entry_parsed[3:]) + " -t " + entry_parsed[2] + " --mark " + str(mark)
 
-        print(add_entry)
-
-        subprocess.run(f"conntrack -A {add_entry}", shell=True)
-
-        add_entry += " --mark " + str(mark)
-
-        # Attempt at fixing conntrack entries
-
-        print(add_entry)
-
-        subprocess.run(f"conntrack -U {add_entry}", shell=True)
-
+        subprocess.run(f"conntrack {add_entry}", shell=True)
 
 
 def setup_filter_rule(container_ip):
