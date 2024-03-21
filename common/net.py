@@ -181,7 +181,6 @@ def dump_conntrack_entries(container_ip, port):
     real_entries = []
     for entry in unparsed:
         entry_split = entry.split()
-        print(entry_split)
         proto = None
         src_ip = None
         dst_ip = None
@@ -207,7 +206,6 @@ def dump_conntrack_entries(container_ip, port):
                 mark = val[1]
         for parsed_entry in entries:
             parsed_entry_split = parsed_entry.split()
-            print(parsed_entry_split)
             for i in range(0, len(parsed_entry_split) - 1):
                 if parsed_entry_split[i] == "-s":
                     source_ip = parsed_entry_split[i + 1]
