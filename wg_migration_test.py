@@ -55,8 +55,10 @@ def migrate(from_, to, time_, check_finished):
         if not m1_finished.is_set():
             bad_test.set()
         m1_finished.wait()
-    run_ssh_command(from_,
-                    f"'cd live-container-migration/agent-client && poetry run python main.py --use-cli-args --host {to} --port 50051 --container_num 0'").wait()
+    o = run_ssh_command(from_,
+                    f"'cd live-container-migration/agent-client && poetry run python main.py --use-cli-args --host {to} --port 50051 --container_num 0'")
+    o.wait()
+    print(o.stdout)
     m1_finished.set()
 
 
