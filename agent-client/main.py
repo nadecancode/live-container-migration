@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import subprocess
@@ -53,11 +54,24 @@ cli = SlidePrompt([
     )
 ])
 
-result = cli.launch()
+parser = argparse.ArgumentParser()
+parser.add_argument("--use-cli-args", action="store_true")
+parser.add_argument("--host", type=str, default=None)
+parser.add_argument("--port", type=int, default=None)
+parser.add_argument("--container_num", type=int, default=None)
 
-responses = [res[1] for res in result]
+args = parser.parse_args()
 
-host, port, container_id = responses
+if not args.use_cli_args:
+    result = cli.launch()
+
+    responses = [res[1] for res in result]
+
+    host, port, container_id = responses
+else:
+    host = args.host
+    port = args.port
+    container_id = running_containers[args.container_num]
 
 print(f"Establishing a session with the destination agent at {host}:{port}")
 comm_client = CommunicationClient(host, port)

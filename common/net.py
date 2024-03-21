@@ -90,8 +90,10 @@ def setup_migration_routing(iface, mark, table):
     subprocess.run(f"ip rule add fwmark {mark} lookup {table}", shell=True)
     subprocess.run(f"ip route add default dev {iface} table {table}", shell=True)
     # Add iptables rules
+    # Removing podman interface specificity should allow multi-hop routing
+    # Even though incoming packets are marked, they get re-marked so don't fall into the custom routing table
     subprocess.run(
-        f"iptables -t mangle -A PREROUTING -i {PODMAN_IFACE} -m mark --mark {mark + 1} -j MARK --set-mark {mark}",
+        f"iptables -t mangle -A PREROUTING -m mark --mark {mark + 1} -j MARK --set-mark {mark}",
         shell=True)
     subprocess.run(f"iptables -t mangle -A PREROUTING -i {iface} -j MARK --set-mark {mark + 1}", shell=True)
     subprocess.run(f"iptables -t mangle -A PREROUTING -i {iface} -j CONNMARK --save-mark", shell=True)
@@ -287,7 +289,7 @@ def setup_wg():
     subprocess.run("wg genkey > " + PRIVKEY_NAME, shell=True)
     subprocess.run("wg pubkey < " + PRIVKEY_NAME + " > " + PUBKEY_NAME, shell=True)
 
-    # Setup conmark save rule
+    # Setup conmark save rule; this is once PER HOST
     subprocess.run(f"iptables -t mangle -A PREROUTING -i {PODMAN_IFACE} -j CONNMARK --restore-mark", shell=True)
 
 # json handling could be better, unfortunately not atomic and I don't want to deal with locks
