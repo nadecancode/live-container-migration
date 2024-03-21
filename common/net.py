@@ -182,6 +182,12 @@ def dump_conntrack_entries(container_ip, port):
     for entry in unparsed:
         entry_split = entry.split()
         print(entry_split)
+        proto = None
+        src_ip = None
+        dst_ip = None
+        src_port = None
+        dst_port = None
+        mark = None
         for i in range(0, len(entry_split)):
             if entry_split[i] == "udp" or entry_split[i] == "tcp":
                 proto = entry_split[i]
@@ -189,15 +195,15 @@ def dump_conntrack_entries(container_ip, port):
             val = entry_split[i].split("=")
             if len(val) == 0:
                 continue
-            if val[0] == "src":
+            if val[0] == "src" and src_ip is None:
                 src_ip = val[1]
-            if val[0] == "dst":
+            if val[0] == "dst" and dst_ip is None:
                 dst_ip = val[1]
-            if val[0] == "sport":
+            if val[0] == "sport" and src_port is None:
                 src_port = val[1]
-            if val[0] == "dport":
+            if val[0] == "dport" and dst_port is None:
                 dst_port = val[1]
-            if val[0] == "mark":
+            if val[0] == "mark" and mark is None:
                 mark = val[1]
         for parsed_entry in entries:
             parsed_entry_split = parsed_entry.split()
