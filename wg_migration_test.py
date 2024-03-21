@@ -13,6 +13,7 @@ ND_3 = "34.209.121.58"
 
 
 def run_ssh_command(ip, command):
+    print(f"Running {command} on {ip}")
     if ip == ND_3:
         return subprocess.run(command, shell=True, stdout=subprocess.PIPE, text=True)
     # use popen for async
@@ -24,15 +25,21 @@ def run_ssh_command(ip, command):
 run_ssh_command(ND_1, "'cd live-container-migration/agent-server && poetry run python main.py'")
 run_ssh_command(ND_2, "'cd live-container-migration/agent-server && poetry run python main.py'")
 
+print("Servers started")
+
 # Start iperf container on node 0
 # podman run -dt --runtime=runc --name iperf3 -p 5201:5201 --replace --privileged  docker.io/networkstatic/iperf3 -s -J
 run_ssh_command(ND_0,
                 "podman run -dt --runtime=runc --name iperf3 -p 5201:5201 --replace --privileged  docker.io/networkstatic/iperf3 -s -J")
 
+print("Iperf container started")
+
 # Start iperf on node 3 connecting to node 0
 # iperf3 -J --bidir -t 80 -c IP -p 5201
 # leave 20 extra seconds for various migration things
 output = run_ssh_command(ND_3, f"iperf3 -J --bidir -t 80 -c {ND_0} -p 5201")
+
+print("Iperf started")
 
 # Wait 20 seconds, migrate from node 0 to node 1
 # poetry run python main.py --use-cli-args --host ND_1 --port 50051 --container_num 0
@@ -57,12 +64,18 @@ t1 = threading.Thread(target=migrate, args=(ND_0, ND_1, 20, False))
 
 t2 = threading.Thread(target=migrate, args=(ND_1, ND_2, 40, True))
 
+t1.start()
+t2.start()
+
+print("Threads started")
+
 # Wait another 20 seconds, then wait for iperf to finish up to 30s; if its not done, it's deadlocked
 # I noticed this failure mode at CAIDA, I think if iperf gets packet flow interrupted it just... won't die
 # So kill iperf after the 30 seconds
 time.sleep(60)
 t1.join(20)
 t2.join(20)
+print("Threads joined")
 run_ssh_command(ND_1, "pkill -9 python")
 run_ssh_command(ND_2, "pkill -9 python")
 try:
@@ -71,6 +84,8 @@ except subprocess.TimeoutExpired:
     output.kill()
     run_ssh_command(ND_3, "pkill -9 iperf3").wait()
     out, err = output.communicate()
+
+print("Iperf finished")
 
 # Finish up, then clean up (remove containers on all nodes)
 # podman stop iperf3
@@ -88,6 +103,8 @@ n0.wait()
 n1.wait()
 n2.wait()
 
+print("Cleaned up iperf containers")
+
 # Kill server on all nodes
 n0 = run_ssh_command(ND_0, "pkill -9 python")
 n1 = run_ssh_command(ND_1, "pkill -9 python")
@@ -96,6 +113,8 @@ n0.wait()
 n1.wait()
 n2.wait()
 
+print("Killed servers")
+
 bad = "notbad"
 if bad_test.is_set():
     bad = "bad"
@@ -103,3 +122,5 @@ if bad_test.is_set():
 # Output iperf results to json
 with open(f"iperf_{datetime.datetime.now()}_{bad}", "w") as f:
     f.write(out)
+
+print("Done")
