@@ -71,7 +71,7 @@ if not args.use_cli_args:
 else:
     host = args.host
     port = args.port
-    container_id = running_containers[args.container_num]
+    container_id = running_containers[args.container_num].id
 
 print(f"Establishing a session with the destination agent at {host}:{port}")
 comm_client = CommunicationClient(host, port)
