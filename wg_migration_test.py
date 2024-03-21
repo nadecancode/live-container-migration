@@ -30,9 +30,11 @@ print("Servers started")
 # Start iperf container on node 0
 # podman run -dt --runtime=runc --name iperf3 -p 5201:5201 --replace --privileged  docker.io/networkstatic/iperf3 -s -J
 run_ssh_command(ND_0,
-                "podman run -dt --runtime=runc --name iperf3 -p 5201:5201/tcp -p 5201:5201/udp --replace --privileged  docker.io/networkstatic/iperf3 -s -J")
+                "podman run -dt --runtime=runc --name iperf3 -p 5201:5201/tcp -p 5201:5201/udp --replace --privileged  docker.io/networkstatic/iperf3 -s -J").wait()
 
 print("Iperf container started")
+
+time.sleep(5)
 
 # Start iperf on node 3 connecting to node 0
 # iperf3 -J --bidir -t 80 -c IP -p 5201
