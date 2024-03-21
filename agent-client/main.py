@@ -242,7 +242,7 @@ for internal_port, port_entry in ports.items():
         global_entries.extend(entries)
         net.rewrite_source_conntrack_entries(entries, ip, ip_peer, internal_port, host_port["HostPort"])
         # Optional: this allows new connections to be made to the old host, but needs to be cleaned up
-        net.setup_dnat_rule(ip_peer.split("/")[0], int(host_port["HostPort"]))  # uncidr
+        # net.setup_dnat_rule(ip_peer.split("/")[0], int(host_port["HostPort"]))  # uncidr
 
 def net_cleanup(dnat=True):
     net.tc_del_latency(net.get_if_name(ip_peer))
@@ -251,7 +251,8 @@ def net_cleanup(dnat=True):
     if dnat:
         for entry in ports.values():
             for host_entry in entry:
-                net.teardown_dnat_rule(ip_peer.split("/")[0], int(host_entry["HostPort"]))  # uncidr
+                # net.teardown_dnat_rule(ip_peer.split("/")[0], int(host_entry["HostPort"]))  # uncidr
+                pass
 
 
 checkpoint_path = exporter.checkpoint()
