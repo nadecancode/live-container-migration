@@ -39,7 +39,7 @@ time.sleep(5)
 # Start iperf on node 3 connecting to node 0
 # iperf3 -J --bidir -t 80 -c IP -p 5201
 # leave 20 extra seconds for various migration things
-output = run_ssh_command(ND_3, f"iperf3 -J --bidir -t 80 -c {ND_0} -p 5201 --get-server-output")
+output = run_ssh_command(ND_3, f"iperf3 -J --bidir -t 80 -c {ND_0} -p 5201 -u -b 0 --get-server-output")
 
 print("Iperf started")
 
