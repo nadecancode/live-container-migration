@@ -177,9 +177,11 @@ def dump_conntrack_entries(container_ip, port):
 
     # Unparsed format: ipv4     2 udp      17 21 src=34.218.249.146 dst=10.25.167.86 sport=44544 dport=5201 src=10.88.0.12 dst=34.218.249.146 sport=5201 dport=44544 [ASSURED] mark=2 use=1
     # We want to find matching entries using protocol, src, dst, sport, and dport, then add the mark to the entry
+
     real_entries = []
     for entry in unparsed:
         entry_split = entry.split()
+        print(entry_split)
         proto = entry_split[3]
         for i in range(5, len(entry_split)):
             val = entry_split[i].split("=")
@@ -195,6 +197,7 @@ def dump_conntrack_entries(container_ip, port):
                 mark = val[1]
         for parsed_entry in entries:
             parsed_entry_split = parsed_entry.split()
+            print(parsed_entry_split)
             for i in range(3, len(parsed_entry_split), 2):
                 if parsed_entry_split[i] == "-s":
                     source_ip = parsed_entry_split[i + 1]
