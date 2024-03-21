@@ -105,7 +105,7 @@ def teardown_migration_routing(iface, mark, table):
     subprocess.run(f"ip route del default dev {iface} table {table}", shell=True)
     # Remove iptables rules
     subprocess.run(
-        f"iptables -t mangle -D PREROUTING -i {PODMAN_IFACE} -m mark --mark {mark + 1} -j MARK --set-mark {mark}",
+        f"iptables -t mangle -D PREROUTING -m mark --mark {mark + 1} -j MARK --set-mark {mark}",
         shell=True)
     subprocess.run(f"iptables -t mangle -D PREROUTING -i {iface} -j MARK --set-mark {mark + 1}", shell=True)
     subprocess.run(f"iptables -t mangle -D PREROUTING -i {iface} -j CONNMARK --save-mark", shell=True)
@@ -290,7 +290,8 @@ def setup_wg():
     subprocess.run("wg pubkey < " + PRIVKEY_NAME + " > " + PUBKEY_NAME, shell=True)
 
     # Setup conmark save rule; this is once PER HOST
-    subprocess.run(f"iptables -t mangle -A PREROUTING -i {PODMAN_IFACE} -j CONNMARK --restore-mark", shell=True)
+    # Have to remove podman interface specificity for multihop so it goes through the custom routing table
+    subprocess.run(f"iptables -t mangle -A PREROUTING -j CONNMARK --restore-mark", shell=True)
 
 # json handling could be better, unfortunately not atomic and I don't want to deal with locks
 # the goal is for this to be good enough at concurrent access even though we won't use it that way in demos or irl
