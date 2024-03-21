@@ -212,7 +212,7 @@ def dump_conntrack_entries(container_ip, port):
                     real_entries.append(parsed_entry)
                     break
             except:
-                pass
+                print("Parse failure")
 
     return real_entries
 
