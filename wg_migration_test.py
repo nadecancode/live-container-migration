@@ -76,8 +76,8 @@ print("Threads started")
 # I noticed this failure mode at CAIDA, I think if iperf gets packet flow interrupted it just... won't die
 # So kill iperf after the 30 seconds
 time.sleep(60)
-t1.join(20)
-t2.join(20)
+t1.join(40)
+t2.join(80)
 print("Threads joined")
 run_ssh_command(ND_1, "pkill -9 python")
 run_ssh_command(ND_2, "pkill -9 python")
