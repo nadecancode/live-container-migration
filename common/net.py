@@ -260,7 +260,13 @@ def rewrite_source_conntrack_entries(entries, container_ip, wg_ip, old_port, new
 
         add_entry = "-A " + " ".join(entry_parsed[3:]) + " -t " + entry_parsed[2]
 
+        print(del_entry)
+
         subprocess.run(f"conntrack {del_entry}", shell=True)
+
+        print(add_entry)
+
+        subprocess.run(f"conntrack {add_entry}", shell=True)
 
         pass
 
@@ -283,6 +289,8 @@ def add_dest_conntrack_entries(entries, wg_ip, mark):
 
         if not marked:
             add_entry += " --mark " + str(mark)
+
+        print(add_entry)
 
         subprocess.run(f"conntrack {add_entry}", shell=True)
 
