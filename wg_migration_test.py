@@ -15,7 +15,7 @@ ND_3 = "34.209.121.58"
 def run_ssh_command(ip, command):
     print(f"Running {command} on {ip}")
     if ip == ND_3:
-        return subprocess.run(command, shell=True, stdout=subprocess.PIPE, text=True)
+        return subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, text=True)
     # use popen for async
     return subprocess.Popen(f"ssh root@{ip} {command}", shell=True, stdout=subprocess.PIPE, text=True)
 
