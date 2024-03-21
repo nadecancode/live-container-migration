@@ -43,8 +43,8 @@ class CommunicationServer:
         log = logging.getLogger('werkzeug')
         log.disabled = True
 
-        self.checkpoint_path = "/home/cse291/checkpoint.tar.gz"
-        self.precheckpoint_path = "/home/cse291/pre-checkpoint.tar.gz"
+        self.checkpoint_path = "/tmp/checkpoint.tar.gz"
+        self.precheckpoint_path = "/tmp/pre-checkpoint.tar.gz"
 
         @self.app.route("/")
         def index():
