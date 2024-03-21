@@ -52,8 +52,9 @@ bad_test = threading.Event()
 def migrate(from_, to, time_, check_finished):
     time.sleep(time_)
     if check_finished:
+        if not m1_finished.is_set():
+            bad_test.set()
         m1_finished.wait()
-        bad_test.set() # indicates timing was not exact enough
     run_ssh_command(from_,
                     f"'cd live-container-migration/agent-client && poetry run python main.py --use-cli-args --host {to} --port 50051 --container_num 0'").wait()
     m1_finished.set()
