@@ -125,7 +125,7 @@ if bad_test.is_set():
 now = datetime.datetime.now().strftime("%d-%H-%M")
 
 # Output iperf results to json
-with open(f"iperf_{now}_{bad}", "w") as f:
+with open(f"iperf_{now}_{bad}.json", "w") as f:
     f.write(out)
 
 print("Done")
