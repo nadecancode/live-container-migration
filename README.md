@@ -73,6 +73,8 @@ This list may not be exhaustive, so make sure to install any missing packages. F
 
 Since the graphs in the final report are very small, we've included them here for better visibility.
 
+We generated the graphs using: https://github.com/nadecancode/cse291-analysis. This link also has our raw data.
+
 ### TCP graphs
 
 ![figure-7.png](graphs%2Ffigure-7.png)
