@@ -160,7 +160,61 @@ def dump_conntrack_entries(container_ip, port):
         if len(entry) > 0:
             entries.append(entry)
 
-    return entries
+    output = subprocess.run(f"conntrack -L -p udp -g {container_ip} --dport {port}", shell=True, text=True,
+                            capture_output=True).stdout
+    unparsed = []
+    for entry in output.split("\n"):
+        entry = entry.strip()
+        if len(entry) > 0:
+            unparsed.append(entry)
+
+    output = subprocess.run(f"conntrack -L -p tcp -g {container_ip} --dport {port}", shell=True, text=True,
+                            capture_output=True).stdout
+    for entry in output.split("\n"):
+        entry = entry.strip()
+        if len(entry) > 0:
+            unparsed.append(entry)
+
+    # Unparsed format: ipv4     2 udp      17 21 src=34.218.249.146 dst=10.25.167.86 sport=44544 dport=5201 src=10.88.0.12 dst=34.218.249.146 sport=5201 dport=44544 [ASSURED] mark=2 use=1
+    # We want to find matching entries using protocol, src, dst, sport, and dport, then add the mark to the entry
+    real_entries = []
+    for entry in unparsed:
+        entry_split = entry.split()
+        proto = entry_split[3]
+        for i in range(5, len(entry_split)):
+            val = entry_split[i].split("=")
+            if val[0] == "src":
+                src_ip = val[1]
+            if val[0] == "dst":
+                dst_ip = val[1]
+            if val[0] == "sport":
+                src_port = val[1]
+            if val[0] == "dport":
+                dst_port = val[1]
+            if val[0] == "mark":
+                mark = val[1]
+        for parsed_entry in entries:
+            parsed_entry_split = parsed_entry.split()
+            for i in range(3, len(parsed_entry_split), 2):
+                if parsed_entry_split[i] == "-s":
+                    source_ip = parsed_entry_split[i + 1]
+                if parsed_entry_split[i] == "--dport":
+                    dest_port = parsed_entry_split[i + 1]
+                if parsed_entry_split[i] == "--sport":
+                    source_port = parsed_entry_split[i + 1]
+                if parsed_entry_split[i] == "-d":
+                    dest_ip = parsed_entry_split[i + 1]
+                if parsed_entry_split[i] == "-p":
+                    protocol = parsed_entry_split[i + 1]
+            try:
+                if source_ip == src_ip and dest_ip == dst_ip and source_port == src_port and dest_port == dst_port and protocol == proto:
+                    parsed_entry += " --mark " + mark
+                    real_entries.append(parsed_entry)
+                    break
+            except:
+                pass
+
+    return real_entries
 
 
 # Example of pre entry: -A -t 431996 -u SEEN_REPLY,ASSURED -s 71.34.64.4 -d 172.31.26.253 -g 10.88.0.18 -q 71.34.64.4 -p tcp --sport 47202 --dport 8080 --reply-port-src 80 --reply-port-dst 47202 --state ESTABLISHED
